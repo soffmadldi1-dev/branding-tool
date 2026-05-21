@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>퍼스널 브랜딩 프로필 빌더 | bookcreation_</title>
+  <meta name="description" content="취업 준비생을 위한 AI 활용 퍼스널 브랜딩 도구. 경험을 STAR 프레임으로 분해하고 Claude 프롬프트를 자동 생성합니다.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; padding: 0; }
+    :root { font-family: 'Pretendard Variable', Pretendard, -apple-system, sans-serif; }
+    textarea { font-family: inherit !important; }
+    input { font-family: inherit !important; }
+    pre { font-family: 'SF Mono', ui-monospace, Menlo, monospace !important; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F5F5F7; }
+    ::-webkit-scrollbar-thumb { background: #AEAEB2; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+    const {
+      ChevronLeft, ChevronRight, Check, Download, Upload, Copy,
+      Sparkles, Target, BookOpen, Briefcase, Award, Heart,
+      Lightbulb, FileText, AlertCircle, CheckCircle2, X
+    } = LucideReact;
+
+    const C = {
+      canvas: "#FAFAF8", panel: "#FFFFFF", ink: "#1D1D1F",
+      inkMuted: "#6E6E73", inkFaint: "#AEAEB2",
+      accent: "#0066CC", accentSoft: "#E8F0FB",
+      border: "#E5E5EA", borderSoft: "#F0F0F2",
+      good: "#0A7A3B", goodSoft: "#E8F5EE",
+      warn: "#B45309", warnSoft: "#FEF3E7",
+    };
+
+    const STEPS = [
+      { id:1, label:"기본 정보", icon:Target, sub:"지원 분야 & 한 단어 정체성" },
+      { id:2, label:"학력 · 자격 · 툴", icon:BookOpen, sub:"객관 스펙 + AI 툴 보유 현황" },
+      { id:3, label:"핵심 경험 #1", icon:Briefcase, sub:"STAR 프레임으로 분해" },
+      { id:4, label:"핵심 경험 #2", icon:Briefcase, sub:"STAR 프레임으로 분해" },
+      { id:5, label:"핵심 경험 #3", icon:Briefcase, sub:"STAR 프레임으로 분해" },
+      { id:6, label:"강점 Top 3", icon:Award, sub:"역량 + 증명 에피소드" },
+      { id:7, label:"가치관 · 차별화", icon:Heart, sub:"일하는 방식과 차별점" },
+      { id:8, label:"프롬프트 생성", icon:Sparkles, sub:"Claude에 바로 던질 4종 프롬프트" },
+    ];
+
+    const emptyExp = () => ({
+      title:"", period:"", role:"", situation:"", task:"",
+      action:"", metricPeople:"", metricCount:"", metricImpact:"",
+      resultQuant:"", resultQual:"", skills:""
+    });
+
+    const INIT = {
+      name:"", age:"", targetIndustry:"", targetRole:"",
+      oneWord:"", oneWordReason:"",
+      education:"", major:"", gradYear:"", majorKeywords:"", gpa:"",
+      certifications:"", aiTools:"", otherTools:"", languages:"",
+      exp1:emptyExp(), exp2:emptyExp(), exp3:emptyExp(),
+      strength1:{name:"",evidence:""}, strength2:{name:"",evidence:""}, strength3:{name:"",evidence:""},
+      workStyle:"", vision:"", differentiator:"", motivation:"",
+    };
+
+    function deepUpdate(obj, path, value) {
+      const next = {...obj};
+      const keys = path.split(".");
+      let cur = next;
+      for (let i = 0; i < keys.length - 1; i++) {
+        cur[keys[i]] = {...cur[keys[i]]};
+        cur = cur[keys[i]];
+      }
+      cur[keys[keys.length-1]] = value;
+      return next;
+    }
+
+    // ─── UI components ───────────────────────────────────────────
+    function StepHeader({ eyebrow, title, subtitle }) {
+      return (
+        <div style={{marginBottom:32}}>
+          <div style={{color:C.accent,fontWeight:700,fontSize:11,letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:8}}>{eyebrow}</div>
+          <h1 style={{fontWeight:800,fontSize:"clamp(22px,3vw,30px)",letterSpacing:"-0.025em",color:C.ink,margin:"0 0 10px"}}>{title}</h1>
+          <p style={{color:C.inkMuted,fontSize:13,lineHeight:1.7,maxWidth:640,margin:0}}>{subtitle}</p>
+        </div>
+      );
+    }
+
+    function Field({ label, hint, required, children }) {
+      return (
+        <div style={{marginBottom:18}}>
+          <label style={{display:"block",marginBottom:6}}>
+            <span style={{fontWeight:600,color:C.ink,fontSize:13}}>{label}</span>
+            {required && <span style={{color:C.accent,marginLeft:4}}>*</span>}
+            {hint && <span style={{color:C.inkMuted,fontSize:11,marginLeft:8}}>{hint}</span>}
+          </label>
+          {children}
+        </div>
+      );
+    }
+
+    const inputBase = {
+      width:"100%", border:`1px solid ${C.border}`, borderRadius:8,
+      padding:"10px 12px", fontSize:13, outline:"none",
+      color:C.ink, background:"#fff", transition:"border-color 0.15s",
+      lineHeight:1.6
+    };
+    function TInput({ value, onChange, placeholder }) {
+      return (
+        <input
+          type="text" value={value} placeholder={placeholder}
+          onChange={e=>onChange(e.target.value)}
+          style={inputBase}
+          onFocus={e=>e.target.style.borderColor=C.ink}
+          onBlur={e=>e.target.style.borderColor=C.border}
+        />
+      );
+    }
+    function TArea({ value, onChange, placeholder, rows=3 }) {
+      return (
+        <textarea
+          value={value} placeholder={placeholder} rows={rows}
+          onChange={e=>onChange(e.target.value)}
+          style={{...inputBase, resize:"vertical"}}
+          onFocus={e=>e.target.style.borderColor=C.ink}
+          onBlur={e=>e.target.style.borderColor=C.border}
+        />
+      );
+    }
+
+    function GuideBox({ why, good, bad }) {
+      return (
+        <div style={{background:C.canvas,border:`1px solid ${C.border}`,borderRadius:12,padding:16,marginBottom:24}}>
+          {why && (
+            <div style={{marginBottom:good||bad?12:0}}>
+              <div style={{color:C.ink,fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+                <Lightbulb size={12}/> 왜 이걸 묻나요?
+              </div>
+              <p style={{color:C.inkMuted,fontSize:12,lineHeight:1.65,margin:0}}>{why}</p>
+            </div>
+          )}
+          {good && (
+            <div style={{marginBottom:bad?8:0}}>
+              <div style={{color:C.good,fontWeight:700,fontSize:11,marginBottom:4,display:"flex",alignItems:"center",gap:5}}>
+                <CheckCircle2 size={12}/> 좋은 예
+              </div>
+              <p style={{color:C.ink,background:C.goodSoft,fontSize:12,lineHeight:1.65,margin:0,padding:"8px 10px",borderRadius:6}}>{good}</p>
+            </div>
+          )}
+          {bad && (
+            <div>
+              <div style={{color:C.warn,fontWeight:700,fontSize:11,marginBottom:4,display:"flex",alignItems:"center",gap:5}}>
+                <X size={12}/> 피해야 할 예
+              </div>
+              <p style={{color:C.ink,background:C.warnSoft,fontSize:12,lineHeight:1.65,margin:0,padding:"8px 10px",borderRadius:6}}>{bad}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── Steps ───────────────────────────────────────────────────
+    function Step1({ data, upd }) {
+      return (
+        <>
+          <StepHeader eyebrow="STEP 01" title="당신은 누구이고, 어디로 가려고 하나요?" subtitle="브랜딩은 '나를 모르는 사람이 1분 안에 나를 이해할 수 있게 만드는 작업'입니다. 먼저 좌표부터 찍습니다." />
+          <GuideBox
+            why="지원 분야가 막연하면 AI도 막연한 답을 줍니다. '마케팅'이 아니라 '뷰티 브랜드의 퍼포먼스 마케팅'처럼 구체적으로 적을수록 결과물이 날카로워집니다."
+            good="산업: 뷰티/화장품 D2C 브랜드  /  직무: 퍼포먼스 마케팅 (메타·구글 광고 운영)"
+            bad="산업: 마케팅 / 직무: 마케터 (← 산업과 직무가 뒤섞이고 너무 광범위)"
+          />
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <Field label="이름" required><TInput value={data.name} onChange={v=>upd("name",v)} placeholder="홍길동"/></Field>
+            <Field label="나이 (선택)" hint="만 나이 또는 학번"><TInput value={data.age} onChange={v=>upd("age",v)} placeholder="26세 / 99년생"/></Field>
+            <Field label="목표 산업" required hint="구체적으로 한 산업만"><TInput value={data.targetIndustry} onChange={v=>upd("targetIndustry",v)} placeholder="예: 뷰티/화장품 D2C, B2B SaaS, MICE/관광"/></Field>
+            <Field label="목표 직무" required hint="JD에 있는 말로"><TInput value={data.targetRole} onChange={v=>upd("targetRole",v)} placeholder="예: 퍼포먼스 마케터, HRD 컨설턴트, UX 리서처"/></Field>
+          </div>
+          <Field label="나를 한 단어로 표현하면?" required hint="형용사+명사 조합 추천"><TInput value={data.oneWord} onChange={v=>upd("oneWord",v)} placeholder="예: 데이터로 말하는 마케터 / 끈질긴 학습자 / 현장형 기획자"/></Field>
+          <Field label="왜 그 단어인가요?" hint="2~3문장으로. 한 줄 소개의 씨앗이 됩니다."><TArea value={data.oneWordReason} onChange={v=>upd("oneWordReason",v)} placeholder="예: 동아리·인턴 모두에서 데이터로 의사결정을 바꿔낸 경험이 있어, 감보다 숫자로 설득하는 게 편합니다." rows={3}/></Field>
+        </>
+      );
+    }
+
+    function Step2({ data, upd }) {
+      return (
+        <>
+          <StepHeader eyebrow="STEP 02" title="객관 스펙 & 무기 리스트" subtitle="학력은 사실 그대로, 자격증과 툴은 '쓸 수 있는 것'만 적습니다. AI 툴 활용 능력은 2026년 취업 시장의 핵심 차별점입니다." />
+          <GuideBox
+            why="AI 툴은 '쓸 줄 안다'가 아니라 '어떤 결과물을 만들어봤다'까지 적어야 강점이 됩니다."
+            good="ChatGPT (블로그 자동화 워크플로우 구축), Claude (이력서 코칭 봇 제작), Notion AI, Figma"
+            bad="ChatGPT, GPT, AI 사용 가능 (← 무엇을 만들어봤는지 없음)"
+          />
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <Field label="최종 학력"><TInput value={data.education} onChange={v=>upd("education",v)} placeholder="예: 한국대학교 (4년제)"/></Field>
+            <Field label="전공"><TInput value={data.major} onChange={v=>upd("major",v)} placeholder="예: 경영학 전공, 심리학 부전공"/></Field>
+            <Field label="졸업(예정) 연도"><TInput value={data.gradYear} onChange={v=>upd("gradYear",v)} placeholder="예: 2026.02 졸업예정"/></Field>
+            <Field label="학점" hint="4.0 이상일 때만 권장"><TInput value={data.gpa} onChange={v=>upd("gpa",v)} placeholder="예: 4.12 / 4.5"/></Field>
+          </div>
+          <Field label="전공 핵심 키워드 (3~5개)" hint="이력서에서 어필할 학문적 무기"><TInput value={data.majorKeywords} onChange={v=>upd("majorKeywords",v)} placeholder="예: 소비자행동론, 마케팅 리서치, SPSS, 통계분석"/></Field>
+          <Field label="자격증 / 수상 / 어학 점수"><TArea value={data.certifications} onChange={v=>upd("certifications",v)} placeholder="예: GAIQ 자격증 (2025.03) / 마케팅학회 우수논문상 / TOEIC 920" rows={2}/></Field>
+          <Field label="AI 툴 활용 경험" required hint="툴명 + 어떤 결과물을 만들었는지">
+            <TArea value={data.aiTools} onChange={v=>upd("aiTools",v)} placeholder="예: ChatGPT - 블로그 자동화 워크플로우 설계 / Claude - 이력서 첨삭 챗봇 제작 / Midjourney - SNS 비주얼 시안 30종 제작" rows={3}/>
+          </Field>
+          <Field label="기타 사용 가능한 툴"><TInput value={data.otherTools} onChange={v=>upd("otherTools",v)} placeholder="예: Figma, Notion, GA4, Meta Ads Manager, Power BI"/></Field>
+          <Field label="외국어 (선택)"><TInput value={data.languages} onChange={v=>upd("languages",v)} placeholder="예: 영어 (업무 회화), 일본어 (JLPT N2)"/></Field>
+        </>
+      );
+    }
+
+    function ExpStep({ title, subtitle, num, exp, path, upd }) {
+      const u = k => v => upd(`${path}.${k}`, v);
+      return (
+        <>
+          <StepHeader eyebrow={`STEP 0${num+2}`} title={title} subtitle={subtitle}/>
+          <GuideBox
+            why="STAR(Situation-Task-Action-Result)는 면접관·AI 모두가 가장 빨리 이해하는 구조입니다. '열심히 했다'가 아니라 '몇 명·몇 회·몇 %'로 적어야 다른 지원자와 구분됩니다."
+            good="6명 팀 / 12주 / 인스타 도달 380% 증가 / 전환율 2.1% → 4.7%"
+            bad="많은 사람들과 / 오랜 기간 / 좋은 성과 / 크게 향상 (← 검증 불가)"
+          />
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <Field label="경험명" required hint="이력서 한 줄 제목 형식으로"><TInput value={exp.title} onChange={u("title")} placeholder="예: 대학생 마케팅 동아리 회장 / 스타트업 인턴"/></Field>
+            <Field label="기간" required><TInput value={exp.period} onChange={u("period")} placeholder="예: 2024.03 ~ 2024.12 (10개월)"/></Field>
+          </div>
+          <Field label="당시 내 역할" required><TInput value={exp.role} onChange={u("role")} placeholder="예: 회장 / 마케팅 인턴 / 프로젝트 PM"/></Field>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <Field label="S — 상황 / 배경" required hint="어떤 환경·문제였나?">
+              <TArea value={exp.situation} onChange={u("situation")} placeholder="예: 동아리 인스타 팔로워가 1년째 1,200명에 정체 중이었고, 신규 가입률이 분기당 5% 미만으로 떨어진 상태였습니다." rows={3}/>
+            </Field>
+            <Field label="T — 내 과제 / 목표" required hint="무엇을 책임졌나?">
+              <TArea value={exp.task} onChange={u("task")} placeholder="예: 6개월 안에 팔로워 3,000명 돌파와 분기 가입률 15% 회복을 목표로, 콘텐츠 전략 재설계를 맡았습니다." rows={3}/>
+            </Field>
+          </div>
+          <Field label="A — 무엇을, 어떻게 했나?" required hint="구체적 행동을 5~7문장. 동사로 시작하면 좋습니다.">
+            <TArea value={exp.action} onChange={u("action")} placeholder="예: ① 기존 콘텐츠 100개를 데이터 분석해 효율 낮은 4개 카테고리를 정리했습니다. ② 6명 팀을 4파트로 재편하고 주 1회 KPI 리뷰 미팅을 도입했습니다. ③ ChatGPT로 주간 콘텐츠 아이디어 30개를 생성하는 워크플로우를 만들어 기획 시간을 70% 단축했습니다." rows={5}/>
+          </Field>
+          <div style={{background:C.accentSoft,borderLeft:`4px solid ${C.accent}`,borderRadius:"0 8px 8px 0",padding:"10px 14px",marginBottom:16}}>
+            <div style={{color:C.accent,fontWeight:800,fontSize:11,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>정량 지표 (가장 중요)</div>
+            <div style={{color:C.ink,fontSize:12}}>이 세 칸을 비우면 한 줄 소개의 설득력이 절반으로 떨어집니다. 추정치라도 적어주세요.</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
+            <Field label="함께한 인원" hint="팀/조직 규모"><TInput value={exp.metricPeople} onChange={u("metricPeople")} placeholder="예: 6명 팀"/></Field>
+            <Field label="처리한 횟수/건수"><TInput value={exp.metricCount} onChange={u("metricCount")} placeholder="예: 콘텐츠 120건"/></Field>
+            <Field label="향상/절감/증가율"><TInput value={exp.metricImpact} onChange={u("metricImpact")} placeholder="예: 도달 +380%"/></Field>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <Field label="R — 정량 성과" required><TArea value={exp.resultQuant} onChange={u("resultQuant")} placeholder="예: 6개월 만에 팔로워 1,200 → 3,420명 (+185%), 분기 신규 가입률 4.2% → 17.3%" rows={3}/></Field>
+            <Field label="R — 정성 성과 / 영향"><TArea value={exp.resultQual} onChange={u("resultQual")} placeholder="예: 동아리 운영 매뉴얼을 처음으로 문서화해 후배 기수가 KPI 기반 운영을 이어갈 수 있게 됨" rows={3}/></Field>
+          </div>
+          <Field label="이 경험에서 증명된 역량 키워드 3개" required><TInput value={exp.skills} onChange={u("skills")} placeholder="예: 데이터 기반 의사결정, AI 워크플로우 설계, 팀 단위 KPI 운영"/></Field>
+        </>
+      );
+    }
+
+    function Step6({ data, upd }) {
+      const StrRow = ({ label, val, onN, onE }) => (
+        <div style={{border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
+          <div style={{color:C.accent,fontWeight:800,fontSize:11,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:14}}>{label}</div>
+          <Field label="강점 한 줄" required hint="명사형으로"><TInput value={val.name} onChange={onN} placeholder="예: 데이터 기반 의사결정 능력"/></Field>
+          <Field label="이 강점을 증명하는 에피소드" required hint="2~3문장으로"><TArea value={val.evidence} onChange={onE} placeholder="예: 동아리 콘텐츠 기획 때 GA·인사이트 데이터로 분석해, 효율 낮은 4개 카테고리를 정리하고 도달율을 6개월간 380% 끌어올렸습니다." rows={3}/></Field>
+        </div>
+      );
+      return (
+        <>
+          <StepHeader eyebrow="STEP 06" title="가장 자신 있는 강점 Top 3" subtitle="앞에서 적은 경험들에서 공통적으로 발휘된 역량을 뽑아냅니다. 이게 한 줄 소개의 핵심 키워드가 됩니다." />
+          <GuideBox
+            why="강점은 '내가 잘하는 것'이 아니라 '경험으로 증명 가능한 것'이어야 합니다."
+            good="(강점) 데이터 기반 의사결정 능력 → (증명) 동아리 콘텐츠 전략 재편 때 GA 분석으로 도달 380% 향상"
+            bad="(강점) 성실함, 책임감, 소통 능력 (← 누구나 적는, 증명 불가능한 추상어)"
+          />
+          <StrRow label="강점 1" val={data.strength1} onN={v=>upd("strength1.name",v)} onE={v=>upd("strength1.evidence",v)}/>
+          <StrRow label="강점 2" val={data.strength2} onN={v=>upd("strength2.name",v)} onE={v=>upd("strength2.evidence",v)}/>
+          <StrRow label="강점 3" val={data.strength3} onN={v=>upd("strength3.name",v)} onE={v=>upd("strength3.evidence",v)}/>
+        </>
+      );
+    }
+
+    function Step7({ data, upd }) {
+      return (
+        <>
+          <StepHeader eyebrow="STEP 07" title="가치관과 차별화 포인트" subtitle="스펙은 비슷한 지원자도 많습니다. '나는 어떤 사람과 어떻게 일하는가'와 '왜 하필 이 회사·이 분야인가'로 차별화합니다." />
+          <GuideBox
+            why="자소서 '입사 후 포부'와 '지원 동기', 면접 마지막 질문(자기 PR)의 핵심 재료입니다."
+            good="저는 의사결정이 빠른 팀에서 가장 잘 성장합니다. 인턴 때 매주 데이터 회의에서 24시간 안에 광고 세팅을 바꾸던 환경에서 가장 많이 배웠기 때문입니다."
+            bad="열정적이고 도전적인 인재가 되고 싶습니다 (← 누구나 적는 문장)"
+          />
+          <Field label="내가 가장 잘 일하는 방식 (Work Style)" required>
+            <TArea value={data.workStyle} onChange={v=>upd("workStyle",v)} placeholder="예: 의사결정이 빠르고 데이터로 토론하는 팀에서 가장 잘 일합니다. 인턴 때 매주 광고 성과 데이터를 보고 24시간 내 세팅을 바꾸던 사이클에서 가장 빠르게 성장했습니다." rows={4}/>
+          </Field>
+          <Field label="3~5년 후 직업적 비전" required>
+            <TArea value={data.vision} onChange={v=>upd("vision",v)} placeholder="예: 3년 안에 D2C 뷰티 브랜드의 퍼포먼스 마케팅 리드가 되어, AI 자동화로 광고 운영 효율을 두 배로 높이는 시스템을 만들어보고 싶습니다." rows={3}/>
+          </Field>
+          <Field label="다른 지원자와 나를 구분하는 한 가지" required>
+            <TArea value={data.differentiator} onChange={v=>upd("differentiator",v)} placeholder="예: 마케팅 전공자 중 AI 워크플로우를 실제로 동아리·인턴 두 군데에서 운영해본 사람은 흔치 않습니다. 단순히 ChatGPT를 쓰는 게 아니라, 콘텐츠 생산-검증-배포의 풀 사이클을 자동화한 경험이 있습니다." rows={4}/>
+          </Field>
+          <Field label="이 산업·직무를 선택한 진짜 이유" required>
+            <TArea value={data.motivation} onChange={v=>upd("motivation",v)} placeholder="예: 화장품 D2C를 선택한 이유는, 광고비 대비 ROAS 측정이 가장 명확하고, 콘텐츠와 광고가 동시에 작동해야 하는 복잡성이 제 강점과 맞기 때문입니다." rows={3}/>
+          </Field>
+        </>
+      );
+    }
+
+    function formatProfile(d) {
+      const L = [];
+      L.push("■ 기본 정보");
+      L.push(`- 이름: ${d.name||"(미입력)"}`);
+      if(d.age) L.push(`- 나이: ${d.age}`);
+      L.push(`- 목표 산업: ${d.targetIndustry||"(미입력)"}`);
+      L.push(`- 목표 직무: ${d.targetRole||"(미입력)"}`);
+      if(d.oneWord) L.push(`- 한 단어 정체성: ${d.oneWord}`);
+      if(d.oneWordReason) L.push(`- 그 이유: ${d.oneWordReason}`);
+      L.push("");
+      L.push("■ 학력 · 자격 · 툴");
+      if(d.education) L.push(`- 학력: ${d.education}`);
+      if(d.major) L.push(`- 전공: ${d.major}`);
+      if(d.gradYear) L.push(`- 졸업: ${d.gradYear}`);
+      if(d.gpa) L.push(`- 학점: ${d.gpa}`);
+      if(d.majorKeywords) L.push(`- 전공 키워드: ${d.majorKeywords}`);
+      if(d.certifications) L.push(`- 자격증/수상/어학: ${d.certifications}`);
+      if(d.aiTools) L.push(`- AI 툴 활용: ${d.aiTools}`);
+      if(d.otherTools) L.push(`- 기타 툴: ${d.otherTools}`);
+      if(d.languages) L.push(`- 외국어: ${d.languages}`);
+      [d.exp1,d.exp2,d.exp3].forEach((e,i)=>{
+        if(!e.title&&!e.action) return;
+        L.push("");
+        L.push(`■ 핵심 경험 ${i+1}`);
+        if(e.title) L.push(`- 경험명: ${e.title}`);
+        if(e.period) L.push(`- 기간: ${e.period}`);
+        if(e.role) L.push(`- 역할: ${e.role}`);
+        if(e.situation) L.push(`- [S] 상황: ${e.situation}`);
+        if(e.task) L.push(`- [T] 과제: ${e.task}`);
+        if(e.action) L.push(`- [A] 행동: ${e.action}`);
+        const m=[e.metricPeople,e.metricCount,e.metricImpact].filter(Boolean);
+        if(m.length) L.push(`- 정량 지표: ${m.join(" / ")}`);
+        if(e.resultQuant) L.push(`- [R] 정량 성과: ${e.resultQuant}`);
+        if(e.resultQual) L.push(`- [R] 정성 성과: ${e.resultQual}`);
+        if(e.skills) L.push(`- 역량 키워드: ${e.skills}`);
+      });
+      L.push("");
+      L.push("■ 강점 Top 3");
+      [d.strength1,d.strength2,d.strength3].forEach((s,i)=>{
+        if(!s.name) return;
+        L.push(`- 강점 ${i+1}: ${s.name}`);
+        if(s.evidence) L.push(`  · 증명: ${s.evidence}`);
+      });
+      L.push("");
+      L.push("■ 가치관 · 차별화");
+      if(d.workStyle) L.push(`- 일하는 방식: ${d.workStyle}`);
+      if(d.vision) L.push(`- 비전: ${d.vision}`);
+      if(d.differentiator) L.push(`- 차별화: ${d.differentiator}`);
+      if(d.motivation) L.push(`- 지원 동기: ${d.motivation}`);
+      return L.join("\n");
+    }
+
+    function buildPrompts(d) {
+      const P = formatProfile(d);
+      const name = d.name||"지원자";
+      const ind = d.targetIndustry||"지원 산업";
+      const role = d.targetRole||"지원 직무";
+      return [
+        {
+          id:"oneliner", icon:Sparkles,
+          title:"한 줄 소개 (3가지 톤 × 3가지 길이 = 9개 버전)",
+          usage:"Claude에 붙여넣으면 진중·감각적·실용적 3가지 톤으로 30자·60자·100자 버전을 표 형태로 받습니다.",
+          tip:"9개 중 1개를 골라 인스타 프로필·이메일 서명·자소서 첫 문장에 활용하세요.",
+          content:`당신은 한국 취업 시장의 퍼스널 브랜딩 전문 카피라이터입니다.
+아래 [프로필 정보]를 기반으로, ${name}의 한 줄 소개를 만들어주세요.
+
+[프로필 정보]
+${P}
+
+[작성 규칙]
+1. 3가지 톤(진중/감각적/실용적) × 3가지 길이(30자/60자/100자) = 총 9개 버전을 마크다운 표로 제시.
+2. 모든 문장에 [프로필 정보]의 실제 숫자 또는 고유 키워드를 최소 1개 포함.
+3. "성실한", "열정적인", "도전적인" 같은 추상어 절대 사용 금지.
+4. 표 아래: (a) 가장 추천하는 1개와 이유 3문장 (b) 인스타·LinkedIn·이메일 서명 각각에 맞는 버전 매칭.`
+        },
+        {
+          id:"portfolio", icon:BookOpen,
+          title:"포트폴리오 구조 설계 (목차 + 섹션별 가이드)",
+          usage:"지원 직무에 최적화된 포트폴리오 목차와 각 섹션에 어떤 내용을 넣을지 가이드를 받습니다.",
+          tip:"Claude가 제시한 목차 중 자신 없는 섹션은 '3번 섹션을 더 자세히 설계해줘'로 파고드세요.",
+          content:`당신은 한국 취업 시장의 포트폴리오 디렉터입니다.
+${ind} 분야의 ${role}에 합격하기 위한 포트폴리오 구조를 설계해주세요.
+
+[프로필 정보]
+${P}
+
+[작성 규칙]
+1. PDF 또는 Notion 형식 가정. 총 8~12개 섹션.
+2. 각 섹션마다 표로 정리: 섹션명 / 목적 / 들어갈 콘텐츠 / 권장 시각 형식 / 분량.
+3. 첫 페이지(표지·자기소개)와 마지막 페이지(연락처·링크) 반드시 포함.
+4. ${role}에 직접 어필되는 섹션 최소 2개 이상 ★로 강조.
+5. 마지막에 "이 포트폴리오로 면접에서 받게 될 예상 질문 5개" 함께 제시.`
+        },
+        {
+          id:"coverletter", icon:FileText,
+          title:"자기소개서 4대 항목 초안",
+          usage:"성장과정·지원동기·핵심역량·입사 후 포부 4개 항목의 초안을 각 500~700자로 한 번에 받습니다.",
+          tip:"초안은 반드시 본인 말로 다듬어야 합니다. '위 글에서 AI 티 나는 표현 다 골라줘'로 보정하세요.",
+          content:`당신은 14년 경력의 한국 취업 자기소개서 첨삭 전문가입니다.
+아래 [프로필 정보]를 기반으로 ${ind} ${role} 지원용 자기소개서 초안을 작성해주세요.
+
+[프로필 정보]
+${P}
+
+[작성 규칙]
+1. 4개 항목 각 500~700자(공백 포함): ① 성장과정/가치관 ② 지원 동기 ③ 핵심 역량 증명 ④ 입사 후 3년 포부.
+2. 각 항목 첫 문장은 "결론 먼저" 원칙. 도입부 미사여구 금지.
+3. [프로필 정보]의 숫자·고유 키워드를 항목당 최소 2개 자연스럽게 인용.
+4. 절대 사용 금지: "성실한", "열정적인", "도전적인", "최선을 다하겠습니다", "~한 인재가 되겠습니다".
+5. 각 항목 끝에 [핵심 키워드: ___, ___, ___] 명시.
+6. 마지막에 "면접관이 파고들 가능성 높은 문장 3개 + 예상 후속 질문" 함께 제시.`
+        },
+        {
+          id:"resume", icon:Briefcase,
+          title:"이력서 핵심 Bullet 문장 (경험별 5개 × 3 = 15개)",
+          usage:"3개 경험 각각에서 이력서에 그대로 옮길 STAR 기반 액션 동사 bullet 문장을 받습니다.",
+          tip:"15개 중 가장 강한 3~4개만 골라 쓰고, 나머지는 면접 답변용으로 백업해두세요.",
+          content:`당신은 한국 이력서 작성 전문가입니다.
+아래 [프로필 정보]의 핵심 경험 3개를 STAR 구조에 맞춰 이력서 bullet 문장으로 변환해주세요.
+
+[프로필 정보]
+${P}
+
+[작성 규칙]
+1. 경험 1, 2, 3 각각 bullet 5개씩 = 총 15개.
+2. 모든 bullet: 액션 동사로 시작 / 정량 지표 1개 이상 포함 / 60~120자 이내 / 명사형 어미("~함", "~했음").
+3. 각 경험 5개는 다음 5가지 관점 골고루: ① 규모/맥락 ② 구체적 행동 ③ 사용 툴/방법론 ④ 정량 결과 ⑤ 팀/조직 영향.
+4. 출력은 "### 경험 1: 경험명" 헤딩으로 구분한 마크다운.
+5. 마지막에 "${role} 이력서에 반드시 들어가야 할 TOP 5" 별도 추천.`
+        }
+      ];
+    }
+
+    function computeCompletion(d) {
+      const checks = [
+        ["이름",!!d.name],["목표 산업",!!d.targetIndustry],["목표 직무",!!d.targetRole],
+        ["한 단어 정체성",!!d.oneWord],["AI 툴 경험",!!d.aiTools],
+        ["경험 1 행동",!!d.exp1.action],["경험 1 결과",!!d.exp1.resultQuant],
+        ["경험 2 행동",!!d.exp2.action],["경험 2 결과",!!d.exp2.resultQuant],
+        ["경험 3 행동",!!d.exp3.action],["경험 3 결과",!!d.exp3.resultQuant],
+        ["강점 1",!!d.strength1.name&&!!d.strength1.evidence],
+        ["강점 2",!!d.strength2.name&&!!d.strength2.evidence],
+        ["강점 3",!!d.strength3.name&&!!d.strength3.evidence],
+        ["일하는 방식",!!d.workStyle],["비전",!!d.vision],
+        ["차별화",!!d.differentiator],["지원 동기",!!d.motivation],
+      ];
+      const filled = checks.filter(([,v])=>v).length;
+      return { pct:Math.round(filled/checks.length*100), missing:checks.filter(([,v])=>!v).map(([k])=>k) };
+    }
+
+    function PromptCard({ num, icon:Icon, title, usage, tip, content, copied, onCopy }) {
+      return (
+        <div style={{border:`1px solid ${C.border}`,borderRadius:16,overflow:"hidden",marginBottom:20}}>
+          <div style={{borderBottom:`1px solid ${C.border}`,padding:"18px 20px",display:"flex",alignItems:"flex-start",gap:16}}>
+            <div style={{background:C.accentSoft,color:C.accent,width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <Icon size={20}/>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{color:C.inkMuted,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:4}}>프롬프트 {num}</div>
+              <h3 style={{fontWeight:800,fontSize:16,color:C.ink,margin:"0 0 6px",lineHeight:1.3}}>{title}</h3>
+              <p style={{color:C.inkMuted,fontSize:12,margin:0,lineHeight:1.6}}>{usage}</p>
+            </div>
+            <button
+              onClick={onCopy}
+              style={{background:copied?C.good:C.ink,color:"#fff",border:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,transition:"background 0.2s"}}
+            >
+              {copied?<Check size={14}/>:<Copy size={14}/>}
+              {copied?"복사됨":"복사"}
+            </button>
+          </div>
+          <div style={{background:C.canvas,padding:20}}>
+            <pre style={{fontSize:11,lineHeight:1.75,whiteSpace:"pre-wrap",wordBreak:"break-word",maxHeight:280,overflowY:"auto",margin:0,color:C.ink}}>{content}</pre>
+          </div>
+          {tip && (
+            <div style={{borderTop:`1px solid ${C.borderSoft}`,background:C.canvas,padding:"10px 20px",display:"flex",alignItems:"flex-start",gap:8}}>
+              <Lightbulb size={12} style={{color:C.accent,flexShrink:0,marginTop:2}}/>
+              <p style={{color:C.inkMuted,fontSize:11,margin:0,lineHeight:1.6}}>{tip}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function Step8({ data, copied, onCopy }) {
+      const prompts = useMemo(()=>buildPrompts(data),[data]);
+      const comp = useMemo(()=>computeCompletion(data),[data]);
+      return (
+        <>
+          <StepHeader eyebrow="STEP 08" title="Claude에 바로 던질 4종 프롬프트" subtitle="입력한 정보를 4가지 결과물로 변환해주는 프롬프트가 자동 완성됐습니다. 복사 → Claude 새 대화창에 붙여넣기 → 결과 확인 순으로 사용하세요."/>
+          <div style={{background:comp.pct>=80?C.goodSoft:C.warnSoft,border:`1px solid ${comp.pct>=80?C.good:C.warn}`,borderRadius:12,padding:"14px 18px",marginBottom:24,display:"flex",alignItems:"center",gap:14}}>
+            <div style={{color:comp.pct>=80?C.good:C.warn,flexShrink:0}}>{comp.pct>=80?<CheckCircle2 size={26}/>:<AlertCircle size={26}/>}</div>
+            <div>
+              <div style={{color:C.ink,fontWeight:700,fontSize:13}}>입력 완성도 {comp.pct}%</div>
+              <div style={{color:C.inkMuted,fontSize:12,marginTop:3}}>
+                {comp.pct>=80?"충분한 정보가 모였습니다. 프롬프트를 그대로 써도 좋은 결과가 나옵니다."
+                  :`더 채우면 결과가 좋아집니다. 비어 있는 항목: ${comp.missing.slice(0,3).join(", ")}${comp.missing.length>3?` 외 ${comp.missing.length-3}개`:""}`}
+              </div>
+            </div>
+          </div>
+          {prompts.map((p,i)=>(
+            <PromptCard key={p.id} num={i+1} icon={p.icon} title={p.title} usage={p.usage} tip={p.tip} content={p.content} copied={copied===p.id} onCopy={()=>onCopy(p.content,p.id)}/>
+          ))}
+          <div style={{background:C.ink,borderRadius:16,padding:24,marginTop:8}}>
+            <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
+              <Sparkles size={20} style={{color:"#2997FF",flexShrink:0,marginTop:2}}/>
+              <div>
+                <div style={{fontWeight:800,fontSize:14,color:"#fff",marginBottom:10}}>강사 활용 팁</div>
+                <ul style={{color:"rgba(255,255,255,0.75)",fontSize:12,lineHeight:1.8,paddingLeft:18,margin:0}}>
+                  <li>입력 단계 자체가 자기탐색 수업의 핵심입니다. <strong style={{color:"#fff"}}>STEP 3~5 (경험)</strong>에만 최소 30분을 쓰게 하세요.</li>
+                  <li>프롬프트 결과를 받은 뒤 <em style={{color:"rgba(255,255,255,0.6)"}}>"위 결과를 200자로 줄여줘"</em>, <em style={{color:"rgba(255,255,255,0.6)"}}>"이 회사 JD에 맞게 다시 써줘"</em> 같은 후속 프롬프트 사용법을 함께 가르치세요.</li>
+                  <li>우상단 <strong style={{color:"#fff"}}>내보내기</strong>로 JSON을 받아 다음 기수 강의 때 불러올 수 있습니다.</li>
+                  <li>학생끼리 짝지어 서로의 한 줄 소개를 평가하는 페어 리뷰 시간을 가지면 효과가 배가됩니다.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ─── Main App ────────────────────────────────────────────────
+    function App() {
+      const [step, setStep] = useState(1);
+      const [data, setData] = useState(INIT);
+      const [copied, setCopied] = useState(null);
+      const [menuOpen, setMenuOpen] = useState(false);
+
+      const upd = useCallback((path, value) => {
+        setData(prev => deepUpdate(prev, path, value));
+      }, []);
+
+      const exportJSON = () => {
+        const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href=url; a.download=`branding-${data.name||"draft"}-${new Date().toISOString().slice(0,10)}.json`;
+        a.click(); URL.revokeObjectURL(url);
+      };
+
+      const importJSON = e => {
+        const file = e.target.files?.[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => { try { setData({...INIT,...JSON.parse(ev.target.result)}); } catch { alert("파일을 읽을 수 없습니다."); } };
+        reader.readAsText(file); e.target.value="";
+      };
+
+      const copyPrompt = (text, id) => {
+        navigator.clipboard.writeText(text);
+        setCopied(id); setTimeout(()=>setCopied(null),1800);
+      };
+
+      const progress = step / STEPS.length * 100;
+
+      return (
+        <div style={{fontFamily:"'Pretendard Variable', Pretendard, -apple-system, sans-serif",background:C.canvas,minHeight:"100vh",color:C.ink}}>
+          {/* Header */}
+          <header style={{borderBottom:`1px solid ${C.border}`,background:C.panel,position:"sticky",top:0,zIndex:50}}>
+            <div style={{maxWidth:1200,margin:"0 auto",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{background:C.ink,width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <Sparkles size={17} color="white"/>
+                </div>
+                <div>
+                  <div style={{fontWeight:800,fontSize:14,letterSpacing:"-0.02em",lineHeight:1.2}}>퍼스널 브랜딩 프로필 빌더</div>
+                  <div style={{color:C.inkMuted,fontSize:11,marginTop:1}}>AI 활용 취업 브랜딩 · 입력 → 프롬프트 자동 생성</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <label style={{border:`1px solid ${C.border}`,color:C.ink,borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6,background:"#fff"}}>
+                  <Upload size={13}/> 불러오기
+                  <input type="file" accept="application/json" onChange={importJSON} style={{display:"none"}}/>
+                </label>
+                <button onClick={exportJSON} style={{border:`1px solid ${C.border}`,color:C.ink,borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6,background:"#fff"}}>
+                  <Download size={13}/> 내보내기
+                </button>
+              </div>
+            </div>
+            <div style={{height:3,background:C.borderSoft}}>
+              <div style={{width:`${progress}%`,height:"100%",background:C.accent,transition:"width 0.4s ease"}}/>
+            </div>
+          </header>
+
+          <div style={{maxWidth:1200,margin:"0 auto",padding:"28px 24px",display:"grid",gridTemplateColumns:"220px 1fr",gap:28}}>
+            {/* Sidebar */}
+            <aside style={{position:"sticky",top:80,height:"fit-content"}}>
+              <div style={{color:C.inkMuted,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>진행 단계 {step}/{STEPS.length}</div>
+              <ol style={{listStyle:"none",margin:0,padding:0,display:"flex",flexDirection:"column",gap:4}}>
+                {STEPS.map(s=>{
+                  const Icon=s.icon; const active=s.id===step; const done=s.id<step;
+                  return (
+                    <li key={s.id}>
+                      <button onClick={()=>setStep(s.id)}
+                        style={{width:"100%",textAlign:"left",border:"none",borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",transition:"background 0.15s",
+                          background:active?C.ink:"transparent", color:active?"white":done?C.ink:C.inkMuted}}>
+                        <div style={{width:24,height:24,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0,marginTop:1,
+                          background:active?"white":done?C.accent:C.borderSoft, color:active?C.ink:done?"white":C.inkMuted}}>
+                          {done?<Check size={12}/>:s.id}
+                        </div>
+                        <div style={{minWidth:0}}>
+                          <div style={{fontWeight:600,fontSize:12,lineHeight:1.3}}>{s.label}</div>
+                          <div style={{fontSize:10,marginTop:2,opacity:0.65,lineHeight:1.3}}>{s.sub}</div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </aside>
+
+            {/* Main */}
+            <main>
+              <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:20,padding:40}}>
+                {step===1 && <Step1 data={data} upd={upd}/>}
+                {step===2 && <Step2 data={data} upd={upd}/>}
+                {step===3 && <ExpStep title="핵심 경험 #1" subtitle="가장 임팩트 있었던 경험을 STAR 프레임으로 분해합니다." num={1} exp={data.exp1} path="exp1" upd={upd}/>}
+                {step===4 && <ExpStep title="핵심 경험 #2" subtitle="첫 번째와 결이 다른 경험을 골라주세요. (예: 1번이 학업이면 2번은 활동/알바)" num={2} exp={data.exp2} path="exp2" upd={upd}/>}
+                {step===5 && <ExpStep title="핵심 경험 #3" subtitle="지원 분야와 연관성이 가장 강한 경험으로 마무리합니다." num={3} exp={data.exp3} path="exp3" upd={upd}/>}
+                {step===6 && <Step6 data={data} upd={upd}/>}
+                {step===7 && <Step7 data={data} upd={upd}/>}
+                {step===8 && <Step8 data={data} copied={copied} onCopy={copyPrompt}/>}
+
+                <div style={{borderTop:`1px solid ${C.border}`,marginTop:36,paddingTop:20,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <button onClick={()=>setStep(s=>Math.max(1,s-1))} disabled={step===1}
+                    style={{border:`1px solid ${C.border}`,background:"transparent",color:step===1?C.inkFaint:C.ink,borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:step===1?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6}}>
+                    <ChevronLeft size={15}/> 이전
+                  </button>
+                  <span style={{color:C.inkFaint,fontSize:12}}>Step {step} / {STEPS.length}</span>
+                  {step<STEPS.length
+                    ? <button onClick={()=>setStep(s=>Math.min(STEPS.length,s+1))}
+                        style={{background:C.ink,color:"#fff",border:"none",borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                        다음 <ChevronRight size={15}/>
+                      </button>
+                    : <button onClick={()=>setStep(1)}
+                        style={{border:`1px solid ${C.border}`,background:"transparent",color:C.ink,borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                        처음으로
+                      </button>
+                  }
+                </div>
+              </div>
+              <div style={{color:C.inkFaint,fontSize:11,marginTop:12,padding:"0 4px"}}>
+                💡 입력 내용은 브라우저를 닫으면 사라집니다. 우상단 <strong>내보내기</strong>로 JSON을 저장해두세요.
+              </div>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
