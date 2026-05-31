@@ -62,6 +62,7 @@ const EX = {
   hotel: {
     role:"예: 호텔 프론트데스크 신입",
     expTitle:"예: 특급호텔 객실부 인턴 (6개월)",
+    job:"예: 프론트 체크인·체크아웃, 객실 안내, 외국인 투숙객 응대",
     action:"예: 성수기 체크인 줄이 길어질 때 모바일 사전 체크인을 먼저 안내했고, 외국인 투숙객에게는 영어로 주변 관광 동선을 짜드렸습니다.",
     situation:"예: 주말 성수기에 체크인 대기 줄이 로비를 가득 메워 불만이 많았던 상황이었습니다.",
     task:"예: 인턴이지만 프론트 대기 시간을 줄이는 데 도움이 되어야 한다고 생각했습니다.",
@@ -75,6 +76,7 @@ const EX = {
   air: {
     role:"예: 객실승무원 신입",
     expTitle:"예: 항공사 인턴 / 기내 서비스 아르바이트",
+    job:"예: 탑승 안내, 기내 서비스 보조, 승객 응대",
     action:"예: 비행 지연으로 승객 불만이 쌓였을 때 먼저 다가가 상황을 설명하고, 음료와 담요를 요청 전에 제공했습니다.",
     situation:"예: 기상 악화로 출발이 1시간 지연돼 기내 분위기가 가라앉아 있었습니다.",
     task:"예: 승객의 불안을 줄이고 안전 안내가 제대로 전달되게 하는 게 제 역할이었습니다.",
@@ -88,6 +90,7 @@ const EX = {
   travel: {
     role:"예: 여행상품 기획 / OP 신입",
     expTitle:"예: 여행사 인턴 (상품기획팀)",
+    job:"예: 여행상품 자료조사, 일정표 작성, 예약 데이터 정리",
     action:"예: 20대 여성 타깃 제주 상품을 기획하며 SNS 인기 장소를 동선으로 묶어 일정표를 새로 짰습니다.",
     situation:"예: 기존 제주 상품이 중장년 위주라 젊은 고객 문의가 적었던 상황이었습니다.",
     task:"예: 새로운 타깃을 위한 일정안을 만들어보는 게 제 과제였습니다.",
@@ -101,6 +104,7 @@ const EX = {
   mice: {
     role:"예: MICE/행사 운영 신입",
     expTitle:"예: 국제회의·박람회 운영 스태프",
+    job:"예: 참가자 등록 데스크 운영, 명찰 관리, 행사장 동선 안내",
     action:"예: 300명 규모 학술대회 등록 데스크를 맡아 명찰 출력·동선 안내를 분담하는 체크리스트를 만들었습니다.",
     situation:"예: 개회 직전 등록 줄이 몰려 행사 시작이 지연될 위기였습니다.",
     task:"예: 혼잡 없이 정시에 등록을 마치는 게 제 역할이었습니다.",
@@ -114,6 +118,7 @@ const EX = {
   casino: {
     role:"예: 카지노 딜러 / 복합리조트 서비스 신입",
     expTitle:"예: 복합리조트 고객서비스 아르바이트",
+    job:"예: VIP 라운지 응대, 시설 안내, 규정 준수 서비스",
     action:"예: VIP 응대 중 규정을 지키면서도 불편을 최소화하도록, 매니저에게 빠르게 보고하는 절차를 지켰습니다.",
     situation:"예: 규정상 안 되는 요청을 한 고객이 강하게 항의하던 상황이었습니다.",
     task:"예: 규정을 어기지 않으면서 고객 감정을 가라앉히는 게 제 몫이었습니다.",
@@ -127,6 +132,7 @@ const EX = {
   public: {
     role:"예: 관광공사·관광재단 행정 신입",
     expTitle:"예: 지자체 관광 서포터즈 / 공모전 참가",
+    job:"예: 지역 관광 자료조사, 설문 진행, 코스 기획·제안",
     action:"예: 지역 관광 활성화 공모전에서 청년 타깃 코스를 제안하며, 설문으로 수요를 먼저 조사했습니다.",
     situation:"예: 지역에 청년 방문객이 적어 관광 콘텐츠가 부족했던 상황이었습니다.",
     task:"예: 근거 있는 청년 코스 제안을 만드는 게 제 역할이었습니다.",
@@ -140,6 +146,7 @@ const EX = {
   custom: {
     role:"예: 지원하려는 관광 분야 직무를 적어주세요",
     expTitle:"예: 가장 대표적인 경험 하나를 적어주세요",
+    job:"예: 그 경험에서 내가 맡았던 일을 적어주세요",
     action:"예: 그때 구체적으로 무엇을, 어떻게 했는지 적어주세요.",
     situation:"예: 그 일을 맡게 된 상황이나 배경을 적어주세요.",
     task:"예: 그 일에서 내 목표나 역할을 적어주세요.",
@@ -152,10 +159,23 @@ const EX = {
   },
 };
 
-const STRENGTH_CHIPS = [
-  "고객 응대","외국어 소통","꼼꼼함","책임감","팀워크","빠른 상황 대처",
-  "친화력","체력·성실","기획력","문서·엑셀","SNS·콘텐츠","문제 해결",
+const EXP_TYPES = [
+  "학창시절","아르바이트","근무·인턴 경험","동아리","학생회·대외활동","공모전·프로젝트","봉사활동","기타",
 ];
+
+const EXP_ROLES = [
+  "리더·팀장","팀원","혼자 진행","보조·서포트",
+];
+
+// 역량 모델 pool (서비스·관광 직무 중심, 그룹별)
+const STRENGTH_GROUPS = [
+  {g:"고객·서비스", items:["고객 응대","친화력","공감·경청","친절·미소 응대","컴플레인 대응","고객 마인드"]},
+  {g:"소통·관계",   items:["외국어 소통","소통·조율","설득·협상","팀워크","리더십"]},
+  {g:"일처리·실행", items:["꼼꼼함·정확성","책임감","빠른 상황 대처","위기관리","실행력","멀티태스킹"]},
+  {g:"기획·분석",   items:["기획력","문제 해결","자료조사·분석","창의·아이디어","데이터·엑셀","매뉴얼화"]},
+  {g:"태도·성장",   items:["체력·성실","근면·끈기","학습 속도","목표 달성력","SNS·콘텐츠"]},
+];
+const STRENGTH_CHIPS = STRENGTH_GROUPS.reduce(function(a,b){return a.concat(b.items);},[]);
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(window.innerWidth < 768);
@@ -171,7 +191,8 @@ const INIT = {
   jobCategory:"", jobCustom:"", role:"", name:"", oneWord:"",
   education:"", major:"", gradYear:"", gpa:"", majorKeywords:"",
   certifications:"", tools:"", appealPoint:"", languages:"",
-  expTitle:"", expPeriod:"", expAction:"", expSituation:"", expTask:"",
+  expType:"", expTitle:"", expPeriod:"", expJob:"", expRole:"",
+  expAction:"", expSituation:"",
   expResult:"", expNumbers:"", expStrengths:[],
   motivation:"", differentiator:"", aspiration:"", workValue:"",
 };
@@ -361,14 +382,40 @@ function S2({d,u,m}) {
 
 function StrengthChips({selected, toggle}) {
   return (
-    <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-      {STRENGTH_CHIPS.map(function(s){
-        var on = selected.indexOf(s)>=0;
+    <div style={{display:"flex",flexDirection:"column",gap:11}}>
+      {STRENGTH_GROUPS.map(function(grp){
         return (
-          <button key={s} onClick={function(){toggle(s);}}
-            style={{border:"1px solid "+(on?C.accent:C.border),background:on?C.accentBg:"#fff",color:on?C.accent:C.muted,
-              borderRadius:20,padding:"6px 13px",fontSize:12.5,fontWeight:on?700:500,cursor:"pointer"}}>
-            {on?"✓ ":""}{s}
+          <div key={grp.g}>
+            <div style={{fontSize:10.5,fontWeight:700,color:C.faint,marginBottom:6,letterSpacing:"0.02em"}}>{grp.g}</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {grp.items.map(function(s){
+                var on = selected.indexOf(s)>=0;
+                return (
+                  <button key={s} onClick={function(){toggle(s);}}
+                    style={{border:"1px solid "+(on?C.accent:C.border),background:on?C.accentBg:"#fff",color:on?C.accent:C.muted,
+                      borderRadius:20,padding:"6px 13px",fontSize:12.5,fontWeight:on?700:500,cursor:"pointer"}}>
+                    {on?"✓ ":""}{s}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PickChips({options, value, set}) {
+  return (
+    <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+      {options.map(function(o){
+        var on = value===o;
+        return (
+          <button key={o} onClick={function(){set(on?"":o);}}
+            style={{border:"1px solid "+(on?C.ink:C.border),background:on?C.ink:"#fff",color:on?"#fff":C.ink,
+              borderRadius:20,padding:"7px 14px",fontSize:12.5,fontWeight:on?700:500,cursor:"pointer"}}>
+            {o}
           </button>
         );
       })}
@@ -385,35 +432,51 @@ function S3({d,u,m}) {
   }
   return (
     <>
-      <SH eyebrow="STEP 03 · 경험 발굴" title="내 경험 하나를 꺼내봅니다" sub="제일 자신 있는 경험 딱 하나만 고르세요. 아래 순서대로 '말하듯이' 답하면, AI가 알아서 자소서 구조(STAR)로 정리해줍니다."/>
+      <SH eyebrow="STEP 03 · 경험 발굴" title="내 경험 하나를 꺼내봅니다" sub="고르고 → 채우기만 하면 됩니다. 한 번에 다 쓰려 하지 말고, 아래 질문에 하나씩 답하면 AI가 자소서 구조(STAR)로 정리해줍니다."/>
       <div style={{background:C.goodBg,border:"1px solid #BFE3CD",borderRadius:10,padding:"11px 14px",marginBottom:20,fontSize:12.5,color:C.good,lineHeight:1.65}}>
-        🙆 <strong>STAR가 뭔지 몰라도 됩니다.</strong> 순서대로 떠오르는 대로 적기만 하세요. 알바, 인턴, 동아리, 학과 행사, 봉사 — 무엇이든 좋습니다.
+        🙆 <strong>거창한 경험이 아니어도 됩니다.</strong> <strong>나의 강점을 가장 잘 보여줄 수 있는 에피소드 하나</strong>를 떠올려 보세요. 작은 일이라도 '내가 무언가를 바꾼 경험'이면 충분합니다.
       </div>
-      <Grid2 m={m}>
-        <F label="① 어떤 경험인가요?" req hint="경험에 이름을 붙여주세요"><TI val={d.expTitle} set={v=>u("expTitle",v)} ph={ex.expTitle}/></F>
-        <F label="기간" hint="대략이면 됩니다"><TI val={d.expPeriod} set={v=>u("expPeriod",v)} ph="예: 2024년 여름 3개월"/></F>
-      </Grid2>
-      <F label="② 그때 무엇을, 어떻게 했나요?" req hint="가장 중요합니다. 내가 실제로 한 행동을 구체적으로. '~했습니다'로 편하게 적으세요">
-        <TA val={d.expAction} set={v=>u("expAction",v)} ph={ex.action} rows={4}/>
+
+      <F label="① 어떤 종류의 경험인가요?" req hint="먼저 골라주세요. 그래야 떠올리기 쉬워집니다">
+        <PickChips options={EXP_TYPES} value={d.expType} set={v=>u("expType",v)}/>
       </F>
-      <F label="③ 그 일을 하게 된 상황·배경은요?" hint="왜 그 일이 필요했나요? 어떤 문제가 있었나요?">
+
+      <F label="② 그 경험을 한 줄로 적으면?" req hint="나의 강점을 잘 살릴 수 있는 에피소드 하나. 제목 붙이듯 가볍게">
+        <TI val={d.expTitle} set={v=>u("expTitle",v)} ph={ex.expTitle}/>
+      </F>
+      <F label="기간" hint="대략이면 됩니다">
+        <TI val={d.expPeriod} set={v=>u("expPeriod",v)} ph="예: 2024년 여름 3개월"/>
+      </F>
+
+      <F label="③ 담당한 직무·업무는 무엇이었나요?" hint="맥락: '무슨 일을 맡았는지'부터 정해야 그 다음이 술술 나옵니다. 직책 말고 '한 일'을 적으세요">
+        <TI val={d.expJob} set={v=>u("expJob",v)} ph={ex.job}/>
+      </F>
+      <F label="④ 그 안에서 내 역할은?" hint="맥락: 혼자 했는지, 이끌었는지, 도왔는지에 따라 어필 포인트가 달라집니다">
+        <PickChips options={EXP_ROLES} value={d.expRole} set={v=>u("expRole",v)}/>
+      </F>
+
+      <F label="⑤ 그 일을 하게 된 배경·상황은요?" hint="맥락: 왜 묻냐면 — 어떤 문제·필요가 있었는지가 있어야, 내 행동이 '의미 있는 일'로 보입니다">
         <TA val={d.expSituation} set={v=>u("expSituation",v)} ph={ex.situation} rows={3}/>
       </F>
-      <F label="④ 그 안에서 내 역할·목표는?" hint="내가 맡은 일, 책임진 부분">
-        <TA val={d.expTask} set={v=>u("expTask",v)} ph={ex.task} rows={2}/>
+
+      <F label="⑥ 그래서 구체적으로 무엇을, 어떻게 했나요?" req hint="맥락: 위에서 맡은 일을 '실제로 어떤 행동으로' 풀었는지. ③④에서 적은 걸 행동으로 풀어쓴다고 생각하세요. '~했습니다'로 편하게">
+        <TA val={d.expAction} set={v=>u("expAction",v)} ph={ex.action} rows={4}/>
       </F>
-      <F label="⑤ 그래서 어떻게 됐나요?" req hint="결과나 달라진 점. 작은 변화도 좋습니다">
+
+      <F label="⑦ 비포 → 애프터, 달라진 점이 있나요?" req hint="맥락: 내가 투입되기 전과 후, 나의 생각·역할·역량으로 무엇이 달라졌나요? (예: 전에는 ~했는데, 내가 ~해서 ~로 바뀜)">
         <TA val={d.expResult} set={v=>u("expResult",v)} ph={ex.result} rows={3}/>
       </F>
-      <F label="⑥ 기억나는 숫자가 있나요? (선택)" hint="없으면 그냥 비워두세요. 있으면 자소서가 훨씬 강해집니다">
+
+      <F label="⑧ 유의미한 성과·숫자가 있었나요? (선택)" hint="없으면 비워두세요. 숫자(인원·기간·횟수·만족도·등급 등)가 하나라도 있으면 자소서가 훨씬 강해집니다">
         <TI val={d.expNumbers} set={v=>u("expNumbers",v)} ph={ex.numbers}/>
       </F>
-      <F label="⑦ 이 경험에서 드러난 나의 강점은?" hint="해당되는 것을 눌러주세요 (여러 개 가능). 클릭만 하면 됩니다">
+
+      <F label="⑨ 이 경험에서 드러난 나의 강점은?" hint="해당되는 것을 눌러주세요 (여러 개 가능). 카테고리별로 골라보면 쉽습니다">
         <StrengthChips selected={d.expStrengths||[]} toggle={toggleStr}/>
       </F>
 
-      <div style={{background:C.accentBg,border:"1px solid #C3D8F5",borderRadius:10,padding:"14px 16px",marginTop:4}}>
-        <F label="⑧ 자, 이제 나를 한 단어로 표현하면?" hint="위 질문들에 답하며 나를 돌아봤다면, 지금 떠오르는 한마디로 적어보세요 (선택)">
+      <div style={{background:C.accentBg,border:"1px solid #C3D8F5",borderRadius:10,padding:"14px 16px",marginTop:8}}>
+        <F label="⑩ 자, 이제 나를 한 단어로 표현하면?" hint="위 질문들에 답하며 나를 돌아봤다면, 지금 떠오르는 한마디로 적어보세요 (선택)">
           <TI val={d.oneWord} set={v=>u("oneWord",v)} ph="예: 끝까지 챙기는 사람 / 잘 웃는 해결사 / 손님 마음을 먼저 읽는 사람"/>
         </F>
         <p style={{margin:0,fontSize:11.5,color:C.muted,lineHeight:1.6}}>💡 이 한 단어가 자소서 첫 문장과 면접 자기소개의 씨앗이 됩니다.</p>
@@ -465,12 +528,14 @@ function fmtProfile(d) {
   if(d.languages) L.push("- 외국어: " + d.languages);
   L.push("");
   L.push("■ 핵심 경험 (STAR)");
-  if(d.expTitle) L.push("- 경험명: " + d.expTitle + (d.expPeriod?(" ("+d.expPeriod+")"):""));
-  if(d.expAction) L.push("- [A] 행동(무엇을/어떻게): " + d.expAction);
+  if(d.expType) L.push("- 경험 종류: " + d.expType);
+  if(d.expTitle) L.push("- 경험 요약: " + d.expTitle + (d.expPeriod?(" ("+d.expPeriod+")"):""));
+  if(d.expJob) L.push("- 담당 직무/업무: " + d.expJob);
+  if(d.expRole) L.push("- 담당 역할: " + d.expRole);
   if(d.expSituation) L.push("- [S] 상황/배경: " + d.expSituation);
-  if(d.expTask) L.push("- [T] 역할/목표: " + d.expTask);
-  if(d.expResult) L.push("- [R] 결과/변화: " + d.expResult);
-  if(d.expNumbers) L.push("- 정량 숫자: " + d.expNumbers);
+  if(d.expAction) L.push("- [A] 행동(무엇을/어떻게): " + d.expAction);
+  if(d.expResult) L.push("- [R] 결과(비포→애프터): " + d.expResult);
+  if(d.expNumbers) L.push("- 정량 성과/숫자: " + d.expNumbers);
   if(d.expStrengths && d.expStrengths.length) L.push("- 드러난 강점: " + d.expStrengths.join(", "));
   L.push("");
   L.push("■ 가치관 · 지원 동기");
@@ -499,18 +564,20 @@ function buildPrompts(d) {
     + "① 지원 동기 (400~500자) ② 핵심 경험·역량 (500~600자, STAR 흐름) ③ 직무 적합성·나의 강점 (400~500자) ④ 입사 후 포부 (300~400자)\n\n"
     + "# 규칙\n"
     + "1. STEP 1에서 정의한 차별화 포인트가 4개 항목에 일관되게 흐르게 할 것.\n"
-    + "2. 모든 항목은 두괄식. 첫 문장에서 결론·핵심을 먼저 말할 것. 인사말·미사여구로 시작 금지.\n"
-    + "3. [프로필]의 실제 경험·숫자·강점 키워드를 항목마다 최소 1개 구체적으로 인용. 프로필에 없는 사실은 절대 지어내지 말 것(없으면 '추가 확인 필요'로 표시).\n"
-    + "4. 금지 표현: '성실한', '열정적인', '책임감 있는', '소통 능력', '최선을 다하겠습니다', '~한 인재가 되겠습니다', '어릴 적부터', '귀사'. → 추상어 대신 장면·행동·숫자로 보여줄 것.\n"
-    + "5. 관광·서비스 직무 특성상 '고객/손님 경험을 어떻게 바꿨는가' 관점을 자연스럽게 녹일 것.\n"
-    + "6. 문장은 짧고 능동태로. 한 문장에 한 메시지.\n\n"
+    + "2. 각 항목 맨 앞에, 그 항목 내용 전체를 한눈에 아우르는 '소제목(헤드라인)'을 붙일 것. 소제목은 15자 내외로 임팩트 있게, 채용담당자가 제목만 봐도 끌리도록(예: \"줄 서는 프론트를 5분 만에 비운 사람\"). 진부한 제목(예: \"성실한 지원자\") 금지.\n"
+    + "3. 모든 항목은 두괄식. 소제목 다음 첫 문장에서 결론·핵심을 먼저 말할 것. 인사말·미사여구로 시작 금지.\n"
+    + "4. [프로필]의 실제 경험·숫자·강점 키워드를 항목마다 최소 1개 구체적으로 인용. 프로필에 없는 사실은 절대 지어내지 말 것(없으면 '추가 확인 필요'로 표시).\n"
+    + "5. 금지 표현: '성실한', '열정적인', '책임감 있는', '소통 능력', '최선을 다하겠습니다', '~한 인재가 되겠습니다', '어릴 적부터', '귀사'. → 추상어 대신 장면·행동·숫자로 보여줄 것.\n"
+    + "6. 관광·서비스 직무 특성상 '고객/손님 경험을 어떻게 바꿨는가' 관점을 자연스럽게 녹일 것.\n"
+    + "7. 문장은 짧고 능동태로. 한 문장에 한 메시지.\n\n"
     + "# 검증 체크리스트 (STEP 3에서 사용)\n"
+    + "- [ ] 각 항목에 내용을 아우르는 매력적인 소제목이 달렸는가?\n"
     + "- [ ] 이 글을 다른 지원자가 그대로 써도 말이 되는가? → 되면 차별화 실패. 더 구체화.\n"
     + "- [ ] 각 항목 첫 문장만 읽어도 핵심이 전달되는가?\n"
     + "- [ ] 금지 표현이 하나도 없는가?\n"
     + "- [ ] 구체적 숫자·장면이 항목마다 있는가?\n\n"
     + "# 출력\n"
-    + "(1) STEP 1 차별화 포인트 한 문장 → (2) 4개 항목 최종본(각 항목 끝에 [핵심 키워드: ○○, ○○]) → (3) '면접관이 이 자소서를 보고 파고들 질문 3개'와 간단한 답변 방향.";
+    + "(1) STEP 1 차별화 포인트 한 문장 → (2) 4개 항목 최종본(각 항목은 [소제목] 줄로 시작, 항목 끝에 [핵심 키워드: ○○, ○○]) → (3) '면접관이 이 자소서를 보고 파고들 질문 3개'와 간단한 답변 방향.";
 
   var p2 = "# 역할\n"
     + "당신은 관광산업 취업 포트폴리오를 설계해 합격시켜 온 디렉터입니다.\n\n"
@@ -611,14 +678,14 @@ function Summary({d}) {
         <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,marginTop:4}}>이 표를 캡처해두면 다른 회사 지원할 때 그대로 재활용할 수 있어요</div>
       </div>
       <SummaryRow label="지원 직무" val={jobLabel(d)+(d.role?(" · "+d.role):"")} ph="STEP 1에서 선택"/>
-      <SummaryRow label="한 단어" val={d.oneWord} ph="STEP 1에서 입력"/>
+      <SummaryRow label="한 단어" val={d.oneWord} ph="STEP 3 마지막에 입력"/>
       <SummaryRow label="나의 강점" val={(d.expStrengths&&d.expStrengths.join(", "))||d.appealPoint} ph="STEP 2~3에서 입력"/>
-      <SummaryRow label="핵심 경험" val={d.expTitle+(d.expPeriod?(" ("+d.expPeriod+")"):"")} ph="STEP 3에서 입력"/>
+      <SummaryRow label="핵심 경험" val={(d.expType?("["+d.expType+"] "):"")+d.expTitle+(d.expPeriod?(" ("+d.expPeriod+")"):"")} ph="STEP 3에서 입력"/>
+      <SummaryRow label="담당 직무" val={d.expJob+(d.expRole?(" · "+d.expRole):"")} ph="맡은 업무·역할"/>
       <SummaryRow label="S 상황" val={d.expSituation} ph="그 일을 하게 된 배경"/>
-      <SummaryRow label="T 역할" val={d.expTask} ph="내가 맡은 목표·역할"/>
       <SummaryRow label="A 행동" val={d.expAction} ph="구체적으로 한 일"/>
-      <SummaryRow label="R 결과" val={d.expResult} ph="달라진 점·성과"/>
-      <SummaryRow label="증명 숫자" val={d.expNumbers} ph="기억나는 숫자 (선택)"/>
+      <SummaryRow label="R 결과" val={d.expResult} ph="비포→애프터 달라진 점"/>
+      <SummaryRow label="성과 숫자" val={d.expNumbers} ph="유의미한 성과·숫자 (선택)"/>
       <SummaryRow label="지원 동기" val={d.motivation} ph="STEP 4에서 입력"/>
       <SummaryRow label="차별화" val={d.differentiator} ph="나를 구분하는 한 가지"/>
       <div style={{background:C.kakao,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
