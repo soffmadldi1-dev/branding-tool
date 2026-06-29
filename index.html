@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>관광분야 자기소개서 프롬프트 생성기</title>
+<title>관광분야 자소서·포트폴리오 프롬프트 메이커</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -11,7 +11,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;padding:0;background:#FAFAF8;font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif}
+body{margin:0;padding:0;background:#FAFAF8;font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;word-break:keep-all;overflow-wrap:break-word}
 input,textarea,button{font-family:inherit}
 textarea{resize:vertical}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -49,14 +49,27 @@ const STEPS = [
 ];
 
 const JOBS = [
-  {id:"hotel",  label:"호텔·외식"},
+  {id:"hotel",  label:"호텔"},
   {id:"air",    label:"항공"},
   {id:"travel", label:"여행사"},
   {id:"mice",   label:"MICE·행사"},
   {id:"casino", label:"카지노·복합리조트"},
+  {id:"food",   label:"외식·F&B"},
   {id:"public", label:"공기업·공공기관"},
   {id:"custom", label:"직접 입력"},
 ];
+
+// 대분류 → 세부 직무 (관광산업 포커싱)
+const JOB_SUBS = {
+  hotel:  ["프론트데스크","객실·하우스키핑","F&B·연회","컨시어지","세일즈·마케팅","예약·리저베이션","백오피스(인사·회계)","기타"],
+  air:    ["객실승무원","공항 지상직(여객)","항공권 예약·발권","운송·운항지원","라운지·VIP응대","기타"],
+  travel: ["여행상품 기획","OP(오퍼레이터)","카운터·여행상담","국외여행인솔자(TC)","항공·호텔 예약","해외영업·제휴","기타"],
+  mice:   ["행사기획·운영(PCO)","전시·컨벤션","등록·의전 운영","기업회의·인센티브","케이터링·F&B","기타"],
+  casino: ["딜러","고객서비스·플로어","VIP·마케팅","리조트 서비스","시설·운영지원","기타"],
+  food:   ["홀서비스·매니지먼트","주방·조리","매장관리(점장)","메뉴·상품기획","프랜차이즈 SV","기타"],
+  public: ["관광기획·행정","사업운영·관리","홍보·마케팅","고객·민원지원","조사·연구","기타"],
+  custom: [],
+};
 
 const EX = {
   hotel: {
@@ -143,6 +156,20 @@ const EX = {
     value:"예: 감이 아니라 데이터와 근거로 설득하는 것을 중요하게 생각합니다.",
     aspire:"예: 지역 관광 데이터를 분석해 정책에 반영하는 일을 해보고 싶습니다.",
   },
+  food: {
+    role:"예: 외식 매장 홀서비스 / 매니지먼트 신입",
+    expTitle:"예: 패밀리 레스토랑 홀 서버 (1년)",
+    job:"예: 주문·서빙, 테이블 세팅, 컴플레인 1차 응대, 마감 정산",
+    action:"예: 주말 피크타임에 신입이 몰려 동선이 꼬일 때, 테이블 구역을 다시 나누고 합석·세팅 순서를 정리한 간이 매뉴얼을 만들었습니다.",
+    situation:"예: 주말 웨이팅이 길어 회전이 느리고 컴플레인이 잦았던 매장이었습니다.",
+    task:"예: 알바였지만 회전율을 높이는 데 기여해야 한다고 봤습니다.",
+    result:"예: 피크타임 평균 대기가 눈에 띄게 줄고, 점장이 마감 책임을 맡겼습니다.",
+    numbers:"예: 1년 / 일 평균 60테이블 / 객단가 관리",
+    motivation:"예: 음식과 공간으로 사람의 하루를 기분 좋게 만드는 일에 보람을 느껴 외식업을 지망합니다.",
+    diff:"예: 홀과 주방을 모두 경험해, 손님 눈높이와 운영 효율을 동시에 봅니다.",
+    value:"예: 바쁠수록 위생과 응대 기본을 지키는 것을 중요하게 생각합니다.",
+    aspire:"예: 현장 감각을 쌓아 매장 운영·매출까지 책임지는 점장으로 성장하고 싶습니다.",
+  },
   custom: {
     role:"예: 지원하려는 관광 분야 직무를 적어주세요",
     expTitle:"예: 가장 대표적인 경험 하나를 적어주세요",
@@ -188,13 +215,14 @@ function useIsMobile() {
 }
 
 const INIT = {
-  jobCategory:"", jobCustom:"", role:"", name:"", oneWord:"",
+  jobCategory:"", jobSub:"", jobCustom:"", role:"", name:"", oneWord:"",
   education:"", major:"", gradYear:"", gpa:"", majorKeywords:"",
   certifications:"", tools:"", appealPoint:"", languages:"",
   expType:"", expTitle:"", expPeriod:"", expJob:"", expRole:"",
   expAction:"", expSituation:"",
   expResult:"", expNumbers:"", expStrengths:[],
   motivation:"", differentiator:"", aspiration:"", workValue:"",
+  pfFormat:"notion",
 };
 
 function setIn(obj, path, val) {
@@ -209,7 +237,9 @@ function setIn(obj, path, val) {
 function jobLabel(d) {
   if(d.jobCategory==="custom") return d.jobCustom || "관광 분야 (직무 미입력)";
   var j = JOBS.find(function(x){return x.id===d.jobCategory;});
-  return j ? j.label : "관광 분야 (미선택)";
+  if(!j) return "관광 분야 (미선택)";
+  var sub = (d.jobSub && d.jobSub!=="기타") ? (" — " + d.jobSub) : "";
+  return j.label + sub;
 }
 function exFor(d) { return EX[d.jobCategory] || EX.custom; }
 
@@ -281,10 +311,10 @@ function Hero({m}) {
           <span style={{color:"rgba(255,255,255,0.7)",fontSize:11.5,fontWeight:700,letterSpacing:"0.02em"}}>경험을 자산으로 — 관광분야 입사서류 빌더</span>
         </div>
         <h2 style={{color:"#fff",fontSize:m?22:28,fontWeight:800,lineHeight:1.35,margin:"0 0 12px",letterSpacing:"-0.02em"}}>
-          내 <span style={{color:"#FFD400"}}>경험</span>을 꺼내고, <span style={{color:"#FFD400"}}>AI</span>로 다듬어<br/>합격 자소서까지 — 한 번에.
+          내 <span style={{color:"#FFD400"}}>경험</span>을 꺼내고, <span style={{color:"#FFD400"}}>AI</span>로 다듬어<br/>자소서·포트폴리오까지 — 한 번에.
         </h2>
         <p style={{color:"rgba(255,255,255,0.7)",fontSize:13.5,lineHeight:1.75,margin:"0 0 18px",maxWidth:520}}>
-          막막한 빈 화면은 그만. 질문에 답만 하면 STAR 구조가 자동으로 정리되고, AI(Claude)에 그대로 넣을 프롬프트까지 완성됩니다.
+          막막한 빈 화면은 그만. 질문에 답만 하면, 바로 제출 가능한 자소서·포트폴리오·한 줄 소개 프롬프트가 완성됩니다. Claude·ChatGPT에 붙여넣기만 하세요.
         </p>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {["① 경험 발굴","② 구조화","③ AI 완성"].map(function(t,i){
@@ -297,7 +327,8 @@ function Hero({m}) {
 }
 
 function S1({d,u,m}) {
-  function pickJob(id){ u("jobCategory",id); }
+  function pickJob(id){ u("jobCategory",id); u("jobSub",""); }
+  var subs = JOB_SUBS[d.jobCategory] || [];
   return (
     <>
       <Hero m={m}/>
@@ -312,13 +343,13 @@ function S1({d,u,m}) {
       <div style={{background:C.warnBg,border:"1px solid #F5D8A8",borderRadius:10,padding:"10px 14px",marginBottom:22,fontSize:11.5,color:C.warn,lineHeight:1.6}}>
         ※ 본 도구는 <strong>프롬프트를 생성하기 위한 용도</strong>입니다. 기입 내용은 <strong>저장되지 않습니다.</strong> 필요한 내용은 작성 후 개별 저장(캡처·복사) 바랍니다.
       </div>
-      <SH eyebrow="시작하기 · WHO" title="당신은 누구인가요?" sub="쉬운 것부터 시작합니다. 이름을 적고, 어떤 직무에 지원하는지 골라주세요. 직무를 고르면 이후 모든 예시가 그 분야로 바뀝니다."/>
+      <SH eyebrow="시작하기 · WHO" title="당신은 누구인가요?" sub="이름을 적고, ① 큰 분야를 고른 뒤 → ② 세부 직무까지 골라주세요. 세부 직무를 고를수록 자소서·포트폴리오가 그 직무에 딱 맞게 나옵니다."/>
 
-      <F label="이름" req>
+      <F label="이름" req hint="실명 또는 자소서에 쓸 이름으로 적어주세요">
         <TI val={d.name} set={v=>u("name",v)} ph="홍길동"/>
       </F>
 
-      <F label="어떤 직무에 지원하나요?" req hint="가장 가까운 분야를 고르세요. 비슷한 게 없으면 '직접 입력'을 누르세요.">
+      <F label="① 어떤 분야에 지원하나요?" req hint="가장 가까운 큰 분야를 고르세요. 분야를 고르면 아래에 세부 직무가 펼쳐지고, 이후 모든 예시가 그 분야로 바뀝니다.">
         <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
           {JOBS.map(function(j){
             var on = d.jobCategory===j.id;
@@ -339,7 +370,27 @@ function S1({d,u,m}) {
         </F>
       )}
 
-      <F label="구체적인 지원 직무" hint="채용 공고에 적힌 직무명으로 적으면 가장 좋습니다">
+      {subs.length>0 && (
+        <div style={{background:C.accentBg,border:"1px solid #C3D8F5",borderRadius:12,padding:"15px 16px",marginBottom:16}}>
+          <F label={"② "+(JOBS.find(function(x){return x.id===d.jobCategory;})||{}).label+" 안에서, 세부 직무는?"} req hint="채용 공고에서 모집하는 직무명에 가장 가까운 것을 고르세요. 정확히 없으면 '기타'를 고르고 아래 칸에 직접 적으면 됩니다.">
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {subs.map(function(s){
+                var on = d.jobSub===s;
+                return (
+                  <button key={s} onClick={function(){u("jobSub",s);}}
+                    style={{border:"1px solid "+(on?C.accent:C.border),background:on?"#fff":"#fff",color:on?C.accent:C.muted,
+                      borderRadius:20,padding:"7px 14px",fontSize:12.5,fontWeight:on?700:500,cursor:"pointer",
+                      boxShadow:on?"0 0 0 2px "+C.accentBg:"none"}}>
+                    {on?"✓ ":""}{s}
+                  </button>
+                );
+              })}
+            </div>
+          </F>
+        </div>
+      )}
+
+      <F label="③ 구체적인 지원 직무명 (선택)" hint="채용 공고 제목에 적힌 직무명을 그대로 옮기면 가장 정확합니다. 예: '2026 상반기 객실 프론트 신입', '식음료팀 인턴'">
         <TI val={d.role} set={v=>u("role",v)} ph={exFor(d).role}/>
       </F>
     </>
@@ -549,66 +600,136 @@ function fmtProfile(d) {
 function buildPrompts(d) {
   var P = fmtProfile(d);
   var name = d.name || "지원자";
-  var job = jobLabel(d) + (d.role?(" "+d.role):"");
+  var job = jobLabel(d) + (d.role?(" / "+d.role):"");
 
+  // ── 프롬프트 1 : 자기소개서 (소재 배분 + 항목 역할 분리로 중복 차단) ──
   var p1 = "# 역할\n"
-    + "당신은 관광산업 채용 자기소개서를 14년간 첨삭하고, 호텔·항공·여행·MICE·공기업 서류 심사위원으로 수백 건을 평가해 온 전문가입니다. 평범한 지원자를 '뽑고 싶은 한 명'으로 바꾸는 것이 당신의 일입니다.\n\n"
+    + "당신은 관광산업(호텔·항공·여행·MICE·카지노·외식·공공) 채용 자기소개서를 14년간 첨삭하고, 서류 심사위원으로 수백 건을 평가해 온 전문가입니다. 평범한 지원자를 '면접에서 꼭 만나보고 싶은 한 명'으로 바꾸는 것이 당신의 일입니다.\n\n"
     + "# 목표\n"
-    + "아래 [프로필]을 바탕으로, '" + job + "' 지원용 자기소개서를 '남들과 차별화된, 이 사람만 쓸 수 있는 글'로 작성하세요.\n\n"
+    + "아래 [프로필]을 바탕으로 '" + job + "' 지원용 자기소개서를, 네 항목이 '서로 다른 이야기'를 하면서 하나의 인물상으로 모이는 '이 사람만 쓸 수 있는 글'로 작성하세요.\n\n"
     + "[프로필]\n" + P + "\n\n"
-    + "# 작성 절차 (반드시 이 순서대로 진행)\n"
-    + "STEP 1. 차별화 포인트 도출: [프로필]을 분석해, 이 지원자만 가진 '결정적 강점(unfair advantage)' 1가지를 한 문장으로 정의하세요. 흔한 강점(성실/책임감) 말고, 경험·숫자·조합에서 나오는 고유한 것이어야 합니다. → 이 문장을 자소서 전체를 관통하는 축으로 삼습니다.\n"
-    + "STEP 2. 초안 작성: 아래 [형식]과 [규칙]에 맞춰 4개 항목을 작성합니다.\n"
-    + "STEP 3. 자가 검증 후 개선: 작성한 초안을 아래 [검증 체크리스트]로 스스로 채점하고, 걸리는 부분을 1회 고쳐 '최종본'으로 다시 제시하세요.\n\n"
-    + "# 형식\n"
-    + "① 지원 동기 (400~500자) ② 핵심 경험·역량 (500~600자, STAR 흐름) ③ 직무 적합성·나의 강점 (400~500자) ④ 입사 후 포부 (300~400자)\n\n"
-    + "# 규칙\n"
-    + "1. STEP 1에서 정의한 차별화 포인트가 4개 항목에 일관되게 흐르게 할 것.\n"
-    + "2. 각 항목 맨 앞에, 그 항목 내용 전체를 한눈에 아우르는 '소제목(헤드라인)'을 붙일 것. 소제목은 15자 내외로 임팩트 있게, 채용담당자가 제목만 봐도 끌리도록(예: \"줄 서는 프론트를 5분 만에 비운 사람\"). 진부한 제목(예: \"성실한 지원자\") 금지.\n"
-    + "3. 모든 항목은 두괄식. 소제목 다음 첫 문장에서 결론·핵심을 먼저 말할 것. 인사말·미사여구로 시작 금지.\n"
-    + "4. [프로필]의 실제 경험·숫자·강점 키워드를 항목마다 최소 1개 구체적으로 인용. 프로필에 없는 사실은 절대 지어내지 말 것(없으면 '추가 확인 필요'로 표시).\n"
-    + "5. 금지 표현: '성실한', '열정적인', '책임감 있는', '소통 능력', '최선을 다하겠습니다', '~한 인재가 되겠습니다', '어릴 적부터', '귀사'. → 추상어 대신 장면·행동·숫자로 보여줄 것.\n"
-    + "6. 관광·서비스 직무 특성상 '고객/손님 경험을 어떻게 바꿨는가' 관점을 자연스럽게 녹일 것.\n"
-    + "7. 문장은 짧고 능동태로. 한 문장에 한 메시지.\n\n"
-    + "# 검증 체크리스트 (STEP 3에서 사용)\n"
-    + "- [ ] 각 항목에 내용을 아우르는 매력적인 소제목이 달렸는가?\n"
-    + "- [ ] 이 글을 다른 지원자가 그대로 써도 말이 되는가? → 되면 차별화 실패. 더 구체화.\n"
+    + "# 진행 순서 (이 순서 고정. STEP 0~1을 먼저 표·메모로 정리한 뒤 본문을 씁니다)\n"
+    + "STEP 0. 소재 배분표 — 가장 중요 (이게 항목 간 중복을 원천 차단합니다)\n"
+    + "  · [프로필]에서 쓸 수 있는 소재(경험·숫자·강점·자격/어학·가치관)를 모두 추출해 나열.\n"
+    + "  · 각 소재를 아래 4개 항목 중 '주력으로 쓸 한 곳'에만 배정 (1소재 = 1주력 항목).\n"
+    + "  · 표로: | 소재 | 주력 배치 항목 | 그 항목에서 쓰는 각도 |\n"
+    + "  · 핵심 규칙: 같은 경험·같은 숫자를 두 항목 이상에서 '주력'으로 쓰지 말 것. 부득이 다시 언급하면 완전히 다른 각도(다른 교훈·다른 측면)로 1문장 이내.\n"
+    + "STEP 1. 차별화 포인트 1문장 — 이 지원자만의 '결정적 강점(남들이 쉽게 못 갖는 경험·조합)'을 한 문장으로 정의. 흔한 말(성실·책임감) 금지. 네 항목을 관통하는 축으로 사용.\n"
+    + "STEP 2. 위 배분표대로 4개 항목 초안 작성.\n"
+    + "STEP 3. [검증 체크리스트]로 자가 채점 → 걸리는 부분 1회 수정 → '최종본' 제시.\n\n"
+    + "# 항목별 역할 분담(R&R) — 항목마다 '다루는 것/안 다루는 것'을 반드시 지킬 것\n"
+    + "① 지원 동기 (400~500자)\n"
+    + "   · 다룬다: 왜 이 회사·이 직무인가 + 그것이 내 방향과 만나는 지점 + 입사로 하고 싶은 것(미래 지향).\n"
+    + "   · 안 다룬다: 경험을 길게 풀지 말 것. 동기를 촉발한 장면은 딱 1문장으로만(경험 상세는 ②에서).\n"
+    + "② 핵심 경험·역량 (500~600자)\n"
+    + "   · 다룬다: 대표 경험 '딱 1개'를 상황→행동→결과 흐름으로 깊게. 내가 한 구체 행동과 바뀐 결과(숫자)에 집중.\n"
+    + "   · 안 다룬다: 지원 동기·포부를 다시 말하지 말 것. 'Situation/Task/Action/Result' 영어 라벨 노출 금지.\n"
+    + "③ 직무 적합성·나의 강점 (400~500자)\n"
+    + "   · 다룬다: ②에서 쓴 경험 '말고' 다른 자산(자격·어학·툴·또 다른 경험·강점)으로 이 직무가 요구하는 역량과 1:1 연결.\n"
+    + "   · 안 다룬다: ②의 대표 경험을 재탕 금지. 겹치면 차별화 실패.\n"
+    + "④ 입사 후 포부 (300~400자)\n"
+    + "   · 다룬다: 입사 직후~1년·3년에 '무엇을 어떻게' 하겠다는 구체적 행동·로드맵.\n"
+    + "   · 안 다룬다: 과거 회고 금지. '최선을 다하겠습니다 / ~한 인재가 되겠습니다' 빈 다짐 금지.\n\n"
+    + "# 공통 규칙\n"
+    + "1. 각 항목 맨 앞 15자 내외 임팩트 소제목(헤드라인). 제목만 봐도 끌리게(예: \"줄 선 로비를 5분 만에 비운 신입\"). 진부한 제목(\"성실한 지원자\") 금지.\n"
+    + "2. 모든 항목 두괄식. 소제목 다음 첫 문장에서 결론부터. 인사말·미사여구로 시작 금지.\n"
+    + "3. [프로필]의 실제 숫자·사례를 항목마다 최소 1개 인용하되, STEP 0 배분표대로 항목마다 '서로 다른' 숫자/사례를 쓸 것. 프로필에 없는 사실·숫자는 절대 지어내지 말 것. 숫자가 부족하면 본문 뒤에 '🔎 숫자로 바꾸면 좋은 부분'을 1~3개 질문으로 제시(예: 응대 고객 수·근무 개월·만족도 등 기억나는 수치가 있나요?).\n"
+    + "4. 금지 표현: 성실한·열정적인·책임감 있는·소통 능력·최선을 다하겠습니다·~한 인재가 되겠습니다·어릴 적부터·귀사 → 추상어 대신 장면·행동·숫자로 보여줄 것.\n"
+    + "5. 관광·서비스 직무 특성상 '고객/손님 경험을 어떻게 바꿨는가' 관점을 자연스럽게 녹일 것.\n"
+    + "6. 문장은 짧고 능동태로. 한 문장에 한 메시지.\n\n"
+    + "# 검증 체크리스트 (STEP 3)\n"
+    + "- [ ] 같은 경험·숫자·문장이 두 항목 이상에서 '주력'으로 반복되지 않는가? (반복 시 재배분)\n"
+    + "- [ ] ①동기·미래 / ②경험 깊이 / ③다른 근거 / ④입사 후 행동 — 네 항목이 서로 다른 이야기를 하는가?\n"
+    + "- [ ] 다른 지원자가 이 글을 그대로 써도 말이 되는가? → 되면 차별화 실패, 더 구체화.\n"
     + "- [ ] 각 항목 첫 문장만 읽어도 핵심이 전달되는가?\n"
-    + "- [ ] 금지 표현이 하나도 없는가?\n"
-    + "- [ ] 구체적 숫자·장면이 항목마다 있는가?\n\n"
-    + "# 출력\n"
-    + "(1) STEP 1 차별화 포인트 한 문장 → (2) 4개 항목 최종본(각 항목은 [소제목] 줄로 시작, 항목 끝에 [핵심 키워드: ○○, ○○]) → (3) '면접관이 이 자소서를 보고 파고들 질문 3개'와 간단한 답변 방향.";
+    + "- [ ] 금지 표현이 하나도 없고, 항목마다 구체 숫자·장면이 있는가?\n\n"
+    + "# 출력 형식\n"
+    + "(1) STEP 0 소재 배분표 → (2) STEP 1 차별화 포인트 1문장 → (3) 4개 항목 최종본(각 항목은 [소제목]으로 시작, 끝에 '(○○자)' 표기) → (4) 🔎 숫자로 바꾸면 좋은 부분 → (5) 면접관이 파고들 예상 질문 3개 + 답변 방향.";
 
-  var p2 = "# 역할\n"
-    + "당신은 관광산업 취업 포트폴리오를 설계해 합격시켜 온 디렉터입니다.\n\n"
+  // ── 프롬프트 2 : 취업 포트폴리오 (노션/PPT 완성물) ──
+  var pfCommon = "# 역할\n"
+    + "당신은 관광산업 채용을 15년간 담당한 인사담당자이자 취업 포트폴리오 디렉터입니다. 인사담당자가 30초 안에 '이 사람 면접 보자'고 판단하게 만드는 포트폴리오를 만듭니다.\n\n"
     + "# 목표\n"
-    + "'" + job + "' 합격을 위한 포트폴리오/제출서류를, 이 지원자의 [프로필]에 맞춰 '바로 만들 수 있게' 설계하세요. 일반론이 아니라, 이 사람 전용 설계여야 합니다.\n\n"
+    + "아래 [프로필]을 가진 지원자의 '" + job + "' 지원용 취업 포트폴리오를, 손대지 않고 바로 제출할 수 있는 완성본으로 작성하세요. 일반론이 아니라 이 사람 전용이어야 합니다.\n\n"
     + "[프로필]\n" + P + "\n\n"
-    + "# 작성 규칙\n"
-    + "1. 먼저 이 지원자가 포트폴리오로 증명해야 할 '핵심 메시지 1줄'을 정의하세요. 모든 섹션은 이 메시지를 뒷받침해야 합니다.\n"
-    + "2. PDF 또는 Notion 기준 7~10개 섹션을 표로: 섹션명 / 목적 / 이 지원자가 넣을 구체적 내용(프로필에서 가져와 적시) / 추천 형식 / 분량.\n"
-    + "3. 표지(자기소개)와 마지막(연락처·입사 후 포부) 반드시 포함.\n"
-    + "4. [프로필]의 핵심 경험을 어느 섹션에 어떤 제목·구성으로 배치할지 구체적으로 안내(예시 문구까지).\n"
-    + "5. 관광 직무 특성상 '서비스 마인드·현장 경험'을 보여줄 섹션을 ★로 강조하고, 사진/후기/수치 등 무엇으로 증명할지 제안.\n"
-    + "6. 경험이 적은 신입이라면 '경험을 어떻게 의미 있게 보이게 할지' 보완 전략을 별도로 제시.\n"
-    + "7. 마지막에 '이 포트폴리오로 받을 예상 면접 질문 5개'와 각 질문에 어느 섹션으로 답할지 매핑.";
+    + "# 공통 작성 규칙\n"
+    + "1. 먼저 이 포트폴리오가 증명할 '핵심 메시지 1줄'을 정하고, 모든 섹션이 그것을 뒷받침하게 할 것.\n"
+    + "2. 6대 역량(직무역량·외국어·서비스/고객지향·커뮤니케이션·성장의지·실무경험)을 [프로필] 근거로 5점 만점 추정하고 추정 근거를 한 줄씩 달 것(없는 사실로 부풀리지 말 것).\n"
+    + "3. 경험은 영어 라벨(Situation/Task…) 노출 없이 '■제목 — 역할 / ·맥락 1줄 / ·한 일(동사로 2~3개) / ▶성과(숫자 굵게 1줄)' 카드로 압축.\n"
+    + "4. 과장·미사여구 금지. 근거(경험·숫자) 없는 형용사 삭제. 정중하되 자신감 있는 한국어.\n"
+    + "5. 경험이 적은 신입이면 대외활동·태도·성장의지를 '직무 언어'로 번역해 의미 있게 보이도록 보완.\n"
+    + "6. [프로필]에 비어 있어 더 강해질 부분은 맨 끝 '🔧 제출 전 보완 포인트 3가지'로 따로 제안(본문엔 넣지 말 것).\n\n";
 
+  var p2;
+  if (d.pfFormat === "ppt") {
+    p2 = pfCommon
+      + "# 출력 형식 — PPT 변환용 슬라이드 설계 (HTML)\n"
+      + "목적은 '그대로 발표·제출용 슬라이드로 옮기는 것'입니다. 줄글 문서가 아니라 슬라이드 1장 = 1섹션으로 구획된 설계도를, 외부 라이브러리 없이 인라인 CSS만으로 작성하세요. 16:9 가로 카드, 각 장은 <section>으로 감싸고 시작에 <!-- Slide N: 제목 --> 주석, 우하단에 페이지 번호. 모든 텍스트 컨테이너에 word-break:keep-all; overflow-wrap:break-word; 적용(한글 깨짐 방지).\n\n"
+      + "[슬라이드 구조 — 8장]\n"
+      + "  1) 표지 — 이름 + 한 줄 자기정의(큰 헤드라인) + 지원 직무('" + job + "')\n"
+      + "  2) 한눈 요약 — 핵심 강점 3개 + 대표 숫자 1개를 크게\n"
+      + "  3) 역량 프로필 — 6대 역량을 가로 막대(레벨/5)로 시각화 + 평균 레벨\n"
+      + "  4) 핵심 경험 ① — 성과 숫자를 슬라이드에서 가장 큰 요소로\n"
+      + "  5) 핵심 경험 ② (또는 대외활동) — 동일 형식\n"
+      + "  6) 직무 적합성 — 좌(이 직무 요구역량) ↔ 우(나의 근거) 2열 대응\n"
+      + "  7) 보유 자산 — 자격·어학·툴·교육을 칩/뱃지로\n"
+      + "  8) 입사 후 포부 — 1년·3년 로드맵을 단계로\n\n"
+      + "[발표자료 원칙]\n"
+      + "- 한 장 = 헤드라인 1줄 + 불릿 3~5개(짧은 키워드) + 시각요소 1개. 텍스트 과밀 금지(발표는 말로 보충).\n"
+      + "- 차분한 포인트 1색 + 무채색, 넉넉한 여백. 성과 숫자는 가장 큰 시각 요소로.\n"
+      + "- 맨 끝 <!-- 발표 대본 --> 주석에 슬라이드별 '말로 보충할 한 마디' 정리.";
+  } else {
+    p2 = pfCommon
+      + "# 출력 형식 — 노션 제출용 최종 포트폴리오\n"
+      + "지원자가 노션에 그대로 붙여 넣어 'PDF로 출력' 또는 '공개 URL'로 제출하는 완성 문서입니다. 노션 기본 블록(제목/콜아웃/표/구분선/체크리스트)만 사용하고 코드블록은 쓰지 마세요.\n\n"
+      + "[페이지 구성 — 이 순서·서식 그대로]\n"
+      + "# (이름) | (한 줄 자기정의)  ← H1. 자기정의 = 지원 직무 + 핵심 강점을 녹인 한 문장.\n"
+      + "> 🎯 한눈 요약 — 지원 직무 · 핵심 강점 3개 · 대표 자격/어학 1개  ← 콜아웃 1줄.\n"
+      + "---\n"
+      + "## 🧭 핵심 역량\n"
+      + "표: | 역량 | 레벨 | 근거 |  — '레벨'은 ████░ 처럼 (점수/5)을 막대로(채움 █ / 빈칸 ░), 근거는 경험에서 1줄.\n"
+      + "## 💼 핵심 경험\n"
+      + "가장 강한 경험 2~3개. 위 경험 카드 형식, 경험 사이에 --- 구분선.\n"
+      + "## 🎯 직무 적합성\n"
+      + "표: | '" + job + "'가 요구하는 역량 | 나의 근거 |  3~4행. 요구사항과 내 경험·강점을 1:1 연결.\n"
+      + "## 📜 보유 자산\n"
+      + "자격·어학·툴·교육을 직무 연관 순으로. 표 또는 ✓ 체크리스트.\n"
+      + "## 🚀 입사 후 포부\n"
+      + "> 콜아웃으로 1~3년 성장 목표를 2~3줄. 막연한 다짐 금지, 구체적 기여·성장 그림.";
+  }
+
+  // ── 프롬프트 3 : 한 줄 소개 (활용처별 맞춤) ──
   var p3 = "# 역할\n"
     + "당신은 한 사람의 본질을 한 문장으로 압축하는 퍼스널 브랜딩 카피라이터입니다.\n\n"
     + "# 목표\n"
-    + "아래 [프로필]을 바탕으로 " + name + "를 한 줄로 표현하는 소개 문구를 만드세요.\n\n"
+    + "아래 [프로필]을 바탕으로 " + name + "를 한 줄로 표현하는 소개 문구를, 상황별로 골라 쓸 수 있게 만드세요.\n\n"
     + "[프로필]\n" + P + "\n\n"
-    + "# 작성 규칙\n"
-    + "1. 먼저 [프로필]에서 이 사람을 규정하는 '핵심 키워드 3개'를 뽑고, 왜 그 3개인지 한 줄씩 설명하세요.\n"
-    + "2. 그 키워드를 기반으로 3가지 톤(따뜻한 / 프로페셔널 / 개성 있는) × 3가지 길이(20자 / 40자 / 70자) = 9개를 표로 제시.\n"
-    + "3. 모든 문구에 [프로필]의 실제 경험 또는 강점 키워드를 1개 이상 녹일 것. '성실한·열정적인' 같은 추상어 금지.\n"
-    + "4. 9개 중 가장 추천하는 1개를 고르고 이유를 3문장으로.\n"
-    + "5. (활용 가이드) 자소서 첫 문장용 / 면접 1분 자기소개 도입용 / 이력서 헤드라인용으로 각각 어떤 버전을 쓰면 좋은지 추천.";
+    + "# 작성 순서\n"
+    + "1. [프로필]에서 이 사람을 규정하는 '핵심 키워드 3개'를 뽑고, 왜 그 3개인지 한 줄씩 설명.\n"
+    + "2. 키워드 기반으로 3가지 톤(따뜻한 / 프로페셔널 / 개성 있는) × 3가지 길이(20자 / 40자 / 70자) = 9개를 표로 제시. 모든 문구에 [프로필]의 실제 경험·강점·숫자를 1개 이상 녹일 것. 추상어(성실·열정) 금지.\n"
+    + "3. 9개 중 가장 추천하는 1개 + 이유 3문장.\n\n"
+    + "# 활용처별 맞춤 추천 (이 부분이 핵심)\n"
+    + "아래 6개 용도에 각각 어떤 버전(톤·길이)을 쓰면 좋은지 1개씩 지정하고, 그 자리에 맞게 살짝 다듬은 '바로 쓰는 문장'을 함께 제시하세요.\n"
+    + "  · 자기소개서 첫 문장 — 두괄식으로 시선을 잡는 버전\n"
+    + "  · 면접 1분 자기소개 도입 — 입으로 말했을 때 자연스러운 버전\n"
+    + "  · 이력서 상단 헤드라인 — 직무 키워드가 들어간 버전\n"
+    + "  · 링크드인/잡코리아 등 채용 프로필 한 줄 — 검색·스캔에 강한 버전\n"
+    + "  · 인스타그램/스레드 소개글 — 친근하고 개성 있는 버전\n"
+    + "  · 명함·포트폴리오 표지 태그라인 — 짧고 각인되는 버전\n\n"
+    + "# 출력\n"
+    + "(1) 핵심 키워드 3개 + 근거 → (2) 톤×길이 9개 표 → (3) 추천 1개 + 이유 → (4) 활용처 6개별 추천 버전과 '바로 쓰는 문장'.";
 
+  var pfLabel = d.pfFormat === "ppt" ? "PPT 슬라이드 설계도" : "노션 완성 포트폴리오";
   return [
-    {id:"p1", ico:"📄", title:"자기소개서 4대 항목 초안", usage:"차별화 포인트 도출 → 4개 항목 작성 → AI 자가검증·개선까지 한 번에. 가장 먼저 쓰세요.", tip:"받은 뒤 채용 공고를 붙여넣고 \"이 공고 인재상에 맞게 다시 써줘\"라고 하면 정확도가 확 올라갑니다.", content:p1},
-    {id:"p2", ico:"📁", title:"포트폴리오 · 제출서류 구조 설계", usage:"내 경험에 맞춘 포트폴리오 목차 + 섹션별 들어갈 내용 + 예상 면접 질문 매핑까지 받습니다.", tip:"자신 없는 섹션은 \"○○ 섹션을 실제 문구까지 써줘\"로 한 번 더 파고드세요.", content:p2},
-    {id:"p3", ico:"✨", title:"나를 한 줄로 표현하는 소개 문구", usage:"핵심 키워드 도출 → 톤·길이별 9개 → 추천 버전·활용처까지. 자소서 첫 문장·면접·이력서에 바로 씁니다.", tip:"9개 중 지인·멘토에게 보여주고 '너답다'는 반응을 받은 것을 고르세요.", content:p3},
+    {id:"p1", ico:"📄", title:"자기소개서 4대 항목 — 중복 없는 완성 초안",
+      usage:"소재 배분표로 항목 간 중복을 먼저 차단 → 네 항목이 서로 다른 이야기를 하도록 작성 → 자가검증·개선까지 한 번에. 가장 먼저 쓰세요.",
+      tip:"받은 뒤 채용 공고를 붙여넣고 \"이 공고 인재상·직무기술서에 맞게 다시 써줘\"라고 하면 정확도가 확 올라갑니다.", content:p1},
+    {id:"p2", ico:"📁", title:"바로 제출하는 취업 포트폴리오 ("+pfLabel+")",
+      usage:"핵심 메시지·6대 역량·경험 카드·직무 적합성·포부까지 갖춘 완성 포트폴리오를 한 번에. 위 토글로 노션/PPT를 고르세요.",
+      tip:"PPT용은 받은 HTML을 브라우저로 열어 확인 후 파워포인트로 옮기고, 노션용은 노션에 붙여 PDF로 출력해 제출하세요.", content:p2},
+    {id:"p3", ico:"✨", title:"나를 한 줄로 — 6가지 활용처 맞춤",
+      usage:"핵심 키워드 → 톤·길이별 9개 → 자소서·면접·이력서·채용프로필·인스타·명함까지 용도별 추천 버전을 받습니다.",
+      tip:"9개 중 지인·멘토에게 보여주고 '너답다'는 반응을 받은 것을 고르세요.", content:p3},
   ];
 }
 
@@ -702,12 +823,12 @@ function Summary({d}) {
   );
 }
 
-function S5({d, copied, onCopy}) {
+function S5({d, u, copied, onCopy}) {
   var prompts = useMemo(function(){return buildPrompts(d);},[d]);
   var pct = useMemo(function(){return completion(d);},[d]);
   return (
     <>
-      <SH eyebrow="STEP 05 · 완성" title="나만의 프롬프트가 완성됐습니다" sub="입력한 내용이 3가지 프롬프트로 자동 정리됐습니다. 복사 → Claude 새 대화창에 붙여넣기 → 결과 확인. 순서대로 쓰는 걸 추천합니다."/>
+      <SH eyebrow="STEP 05 · 완성" title="나만의 프롬프트가 완성됐습니다" sub="입력한 내용이 3가지 프롬프트로 자동 정리됐습니다. ① 자소서 → ② 포트폴리오 → ③ 한 줄 소개 순서로, 복사해서 Claude·ChatGPT 새 대화창에 붙여넣으면 됩니다."/>
       <div style={{background:pct>=60?C.goodBg:C.warnBg,border:"1px solid "+(pct>=60?C.good:C.warn),borderRadius:10,padding:"11px 14px",marginBottom:22,display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:20,flexShrink:0}}>{pct>=60?"✅":"📝"}</span>
         <div style={{fontSize:12.5,color:C.ink,lineHeight:1.5}}>
@@ -715,7 +836,34 @@ function S5({d, copied, onCopy}) {
         </div>
       </div>
       {prompts.map(function(p,i){
-        return <PCard key={p.id} num={i+1} ico={p.ico} title={p.title} usage={p.usage} tip={p.tip} content={p.content} done={copied===p.id} onCopy={function(){onCopy(p.content,p.id);}}/>;
+        return (
+          <React.Fragment key={p.id}>
+            {p.id==="p2" && (
+              <div style={{border:"1px solid "+C.border,borderRadius:14,padding:"15px 16px",marginBottom:12,background:C.canvas}}>
+                <div style={{fontWeight:800,fontSize:13,color:C.ink,marginBottom:9,display:"flex",alignItems:"center",gap:7,wordBreak:"keep-all"}}>📁 포트폴리오를 어디에 만들까요?</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+                  {[{k:"notion",t:"노션 제출용"},{k:"ppt",t:"PPT 변환용"}].map(function(o){
+                    var on = (d.pfFormat||"notion")===o.k;
+                    return (
+                      <button key={o.k} onClick={function(){u("pfFormat",o.k);}}
+                        style={{flex:"1 1 130px",border:"1px solid "+(on?C.ink:C.border),background:on?C.ink:"#fff",color:on?"#fff":C.ink,
+                          borderRadius:10,padding:"11px 12px",fontSize:13,fontWeight:on?800:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        {on?"✓ ":""}{o.t}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p style={{margin:0,fontSize:11.5,color:C.muted,lineHeight:1.6,wordBreak:"keep-all"}}>
+                  {(d.pfFormat||"notion")==="notion"
+                    ? "노션에 붙여 넣어 PDF로 출력하거나 공개 URL로 제출하는 완성 포트폴리오가 나옵니다."
+                    : "발표·제출용 슬라이드 설계도(HTML)가 나옵니다. 브라우저로 열어 본 뒤 파워포인트로 옮기세요."}
+                  {" "}아래 프롬프트가 선택에 맞춰 자동으로 바뀝니다.
+                </p>
+              </div>
+            )}
+            <PCard num={i+1} ico={p.ico} title={p.title} usage={p.usage} tip={p.tip} content={p.content} done={copied===p.id} onCopy={function(){onCopy(p.content,p.id);}}/>
+          </React.Fragment>
+        );
       })}
       <div style={{background:"#F0F7FF",border:"1px solid #C3D8F5",borderRadius:14,padding:18,marginTop:8,marginBottom:24}}>
         <div style={{fontWeight:800,fontSize:14,color:C.ink,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>🗂️ 프롬프트를 잘 쓰는 3가지 방법</div>
@@ -820,8 +968,8 @@ function App() {
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{background:C.ink,width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>✨</div>
             <div>
-              <div style={{fontWeight:800,fontSize:isMobile?13:14.5,letterSpacing:"-0.02em",lineHeight:1.2}}>관광분야 자기소개서 프롬프트 생성기</div>
-              {!isMobile && <div style={{color:C.muted,fontSize:11,marginTop:1}}>퍼스널브랜딩으로 나만의 자소서 프롬프트 완성하기</div>}
+              <div style={{fontWeight:800,fontSize:isMobile?13:14.5,letterSpacing:"-0.02em",lineHeight:1.2}}>관광분야 자소서·포트폴리오 프롬프트 메이커</div>
+              {!isMobile && <div style={{color:C.muted,fontSize:11,marginTop:1}}>질문에 답하면 자소서·포트폴리오·한 줄 소개 프롬프트가 한 번에</div>}
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -843,7 +991,7 @@ function App() {
             {step===2 && <S2 d={data} u={upd} m={isMobile}/>}
             {step===3 && <S3 d={data} u={upd} m={isMobile}/>}
             {step===4 && <S4 d={data} u={upd} m={isMobile}/>}
-            {step===5 && <S5 d={data} copied={copied} onCopy={copyPrompt}/>}
+            {step===5 && <S5 d={data} u={upd} copied={copied} onCopy={copyPrompt}/>}
             <div style={{borderTop:"1px solid "+C.border,marginTop:28,paddingTop:16,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <button onClick={function(){setStep(function(s){return Math.max(1,s-1);});}} disabled={step===1}
                 style={{border:"1px solid "+C.border,background:"transparent",color:step===1?C.faint:C.ink,borderRadius:8,padding:isMobile?"10px 16px":"9px 18px",fontSize:13,fontWeight:600,cursor:step===1?"not-allowed":"pointer"}}>← 이전</button>
