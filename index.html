@@ -741,6 +741,15 @@ function Notice({ico, tone, children}) {
 // ─────────────────────────── STEP 1 : 기본정보·지원 직무 ───────────────────────────
 function S1({d, u, m}) {
   var ex = exFor(d);
+  // 지원 기업 입력칸은 '있어요'를 고른 사람에게만 펼친다 (없으면 그냥 넘어가도 됨)
+  var _co = useState(hasTarget(d)); var hasCo = _co[0]; var setHasCo = _co[1];
+  function pickCo(yes){
+    if(!yes && hasTarget(d)){
+      if(!window.confirm("입력한 지원 기업 정보를 지우고 직무 기준으로 만들까요?")) return;
+      u("targetCompany",""); u("targetPosting",""); u("targetTalent","");
+    }
+    setHasCo(yes);
+  }
   return (
     <>
       <SH eyebrow="STEP 01 · 기본정보와 지원 직무" time="약 3분"
@@ -799,17 +808,37 @@ function S1({d, u, m}) {
         <TI val={d.role} set={function(v){u("role",v);}} ph={ex.role}/>
       </F>
       <div style={{borderTop:"1px dashed "+C.border,margin:"22px 0 18px"}}/>
-      <div style={{fontWeight:800,fontSize:14.5,color:C.ink,marginBottom:6}}>🏢 지원 기업 정보 <span style={{color:C.faint,fontWeight:600,fontSize:12}}>(선택)</span></div>
-      <p style={{color:C.muted,fontSize:12,lineHeight:1.6,margin:"0 0 14px"}}>입사를 희망하는 기업이 정해졌다면 넣어 주세요. 이력서·자소서·포트폴리오·통합 문서 <b>4개 프롬프트 전부</b>가 이 공고와 인재상에 맞춰 키워드·경험 순서·지원 동기·직무 적합도를 맞춥니다. 비워 두면 직무 일반 기준으로 만들어집니다.</p>
-      <F label="기업명" opt>
-        <TI val={d.targetCompany} set={function(v){u("targetCompany",v);}} ph="예: 그랜드코리아레저(GKL) / 롯데호텔 서울 / 한국관광공사"/>
-      </F>
-      <F label="채용공고 원문" opt hint="공고 페이지에서 '담당업무 · 자격요건 · 우대사항' 부분을 통째로 복사해 붙여넣으세요. 정리하지 않아도 됩니다.">
-        <TA val={d.targetPosting} set={function(v){u("targetPosting",v);}} rows={6} ph={"예)\n[담당업무] 외국인 고객 응대 및 예약 관리, VIP 의전\n[자격요건] 관련 학과 졸업(예정)자, 영어 회화 가능자\n[우대사항] TOEIC 800 이상, 호텔 실습 경험자"}/>
-      </F>
-      <F label="인재상·핵심가치·기업 정보" opt hint="채용 홈페이지의 '인재상', 회사 소개의 비전·핵심가치를 붙여넣으세요. 직접 확인한 최근 사업·뉴스가 있으면 한 줄씩 덧붙여도 좋습니다. (여기에 없는 기업 정보는 AI가 지어내지 않도록 막아 두었습니다)">
-        <TA val={d.targetTalent} set={function(v){u("targetTalent",v);}} rows={4} ph={"예)\n인재상 : 고객 감동을 실천하는 서비스인 / 변화에 도전하는 혁신인\n핵심가치 : 신뢰 · 도전 · 존중"}/>
-      </F>
+      <div style={{border:"1px solid "+C.border,borderRadius:12,padding:"15px 16px",background:C.canvas,marginBottom:hasCo?16:0}}>
+        <div style={{fontWeight:800,fontSize:14,color:C.ink,marginBottom:5}}>🏢 지원하려는 기업이 이미 정해졌나요? <span style={{color:C.faint,fontWeight:600,fontSize:12}}>(선택)</span></div>
+        <p style={{color:C.muted,fontSize:12,lineHeight:1.65,margin:"0 0 12px"}}>
+          <b style={{color:C.ink}}>아직 없어도 전혀 문제없습니다.</b> 비워 두면 이력서·자소서·포트폴리오가 {d.jobCategory ? ("'"+jobLabel(d)+"' 직무") : "선택한 직무"} 기준으로 정상 완성됩니다.
+          기업이 정해졌을 때만 공고를 넣으면 그 기업 맞춤으로 한 번 더 다듬어지는 <b style={{color:C.ink}}>추가 옵션</b>이에요. 나중에 기업이 생기면 STEP 1로 돌아와 넣고 프롬프트만 다시 복사하면 됩니다.
+        </p>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {[{k:false,t:"아직 없어요 → 그냥 다음으로"},{k:true,t:"있어요 → 공고 입력하기"}].map(function(o){
+            var on = hasCo===o.k;
+            return (
+              <button key={String(o.k)} onClick={function(){ pickCo(o.k); }}
+                style={{border:"1.5px solid "+(on?C.ink:C.border),background:on?C.ink:"#fff",color:on?"#fff":C.ink,
+                  borderRadius:9,padding:"10px 14px",fontSize:12.5,fontWeight:700,cursor:"pointer"}}>{on?"✓ ":""}{o.t}</button>
+            );
+          })}
+        </div>
+      </div>
+      {hasCo && (
+        <>
+          <Notice ico="💡">세 칸 중 <b>있는 것만</b> 넣으면 됩니다. 기업명만, 또는 공고만 넣어도 반영돼요. 빈칸이 있어도 서류는 정상적으로 만들어집니다.</Notice>
+          <F label="기업명" opt>
+            <TI val={d.targetCompany} set={function(v){u("targetCompany",v);}} ph="예: 그랜드코리아레저(GKL) / 롯데호텔 서울 / 한국관광공사"/>
+          </F>
+          <F label="채용공고 원문" opt hint="공고 페이지에서 '담당업무 · 자격요건 · 우대사항' 부분을 통째로 복사해 붙여넣으세요. 정리하지 않아도 됩니다. 공고가 아직 안 떴다면 비워 두세요.">
+            <TA val={d.targetPosting} set={function(v){u("targetPosting",v);}} rows={6} ph={"예)\n[담당업무] 외국인 고객 응대 및 예약 관리, VIP 의전\n[자격요건] 관련 학과 졸업(예정)자, 영어 회화 가능자\n[우대사항] TOEIC 800 이상, 호텔 실습 경험자"}/>
+          </F>
+          <F label="인재상·핵심가치·기업 정보" opt hint="채용 홈페이지의 '인재상', 회사 소개의 비전·핵심가치를 붙여넣으세요. 찾기 어렵다면 비워 두셔도 됩니다. (여기에 없는 기업 정보는 AI가 지어내지 않도록 막아 두었습니다)">
+            <TA val={d.targetTalent} set={function(v){u("targetTalent",v);}} rows={4} ph={"예)\n인재상 : 고객 감동을 실천하는 서비스인 / 변화에 도전하는 혁신인\n핵심가치 : 신뢰 · 도전 · 존중"}/>
+          </F>
+        </>
+      )}
     </>
   );
 }
@@ -1129,7 +1158,7 @@ function S5({d, u, copied, onCopy, onReset}) {
       </div>
       {hasTarget(d)
         ? <Notice ico="🏢" tone="good"><b>{(d.targetCompany||"").trim() || "지원 기업"} 맞춤 모드</b> — 입력한 {[(d.targetPosting||"").trim()&&"채용공고",(d.targetTalent||"").trim()&&"인재상·기업 정보"].filter(Boolean).join(" · ") || "기업명"}이(가) 4개 프롬프트 전부에 들어갔습니다. 이력서는 공고 키워드 반영표, 자소서는 인재상 연결표, 포트폴리오는 공고 커버리지·인재상 매칭이 추가로 나옵니다.</Notice>
-        : <Notice ico="🏢">지원할 기업이 정해졌다면 <b>STEP 1 맨 아래 '지원 기업 정보'</b>에 채용공고·인재상을 붙여넣어 보세요. 4개 프롬프트가 모두 그 기업 맞춤으로 바뀝니다.</Notice>}
+        : <Notice ico="🏢"><b>직무 기준으로 완성된 프롬프트입니다</b> — 지원 기업 없이도 그대로 쓰시면 됩니다. 나중에 지원할 기업이 정해지면 STEP 1 맨 아래에서 '있어요'를 고르고 공고·인재상을 넣은 뒤, 프롬프트를 다시 복사하면 그 기업 맞춤으로 바뀝니다.</Notice>}
       {prompts.map(function(p,i){
         return (
           <React.Fragment key={p.id}>
